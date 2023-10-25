@@ -20,7 +20,7 @@ struct Pixel {
         red(r), green(g), blue(b), alpha(a) {};
 };
 
-void cpuUpscaler(uint8_t upscaleFactor, uint8_t* data, size_t width, size_t height, uint32_t bytePerPixel, string imageName = "")
+void cpuUpscaler(uint8_t upscaleFactor, uint8_t* data, size_t width, size_t height, uint32_t bytePerPixel, string imageName)
 {
     Pixel* originalImage = (Pixel*)data;
     Pixel* upscaledImage = new Pixel[(width * upscaleFactor) * (height * upscaleFactor)];

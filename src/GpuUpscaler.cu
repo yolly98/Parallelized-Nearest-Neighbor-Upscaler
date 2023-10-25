@@ -30,10 +30,16 @@ __global__ void upscale(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_
     // iterate the pixel to duplicate in upscaled image
     for (int m = newi; m < newi + upscaleFactor; m++) {
         for (int n = newj; n < newj + upscaleFactor * bytePerPixel; n += bytePerPixel) {
-            // for each pixel copy all the channels
+            // compute the pixel position in the upscaled image vector
             uint32_t newIndex = n + m * upscaledWidth * bytePerPixel;
-            for (int k = 0; k < bytePerPixel; k++)
-                upscaledImage[newIndex + k] = imageToUpscale[oldIndex + k];
+            
+            // manage single channel if tridimensional version, else manage all the others
+            if (blockDim.z == 1) {
+                for (int k = 0; k < bytePerPixel; k++)
+                    upscaledImage[newIndex + k] = imageToUpscale[oldIndex + k];
+            } else {
+                upscaledImage[newIndex + threadIdx.z] = imageToUpscale[oldIndex + threadIdx.z];
+            }
         }
     }
 }
@@ -57,7 +63,7 @@ void gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor
 
     // start kernel execution
     timer.start();
-    upscale << <grid, block >> > (d_data, d_out, width, upscaleFactor, bytePerPixel);
+    upscale<< <grid, block >> > (d_data, d_out, width, upscaleFactor, bytePerPixel);
     timer.stop();
 
     // wait for the end of the execution and retrieve results from GPU memory

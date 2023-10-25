@@ -46,9 +46,9 @@ int main(int argc, char* argv[])
     // compute the new upscaled image size
     size_t originalSize = height * width * bytePerPixel * sizeof(uint8_t);
     size_t upscaledSize = height * upscaleFactor * width * upscaleFactor * bytePerPixel * sizeof(uint8_t);
-
+    
     // single core CPU upscaler
-    cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel, "img/singleCPU.png");
+    cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel);
     
     // GPU upscaler with one thread per block
     Settings settings;
@@ -76,7 +76,16 @@ int main(int argc, char* argv[])
     settings.blocksPerGridX = width / (settings.threadsPerBlockX * settings.threadsPerBlockY);
     settings.blocksPerGridY = height;
     settings.blocksPerGridZ = 1;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU.png");
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+    
+    // GPU upscaler with bidimensional matrix of threads and bidimensional matrix of blocks
+    settings.threadsPerBlockX = 4;
+    settings.threadsPerBlockY = 2;
+    settings.threadsPerBlockZ = bytePerPixel;
+    settings.blocksPerGridX = width / (settings.threadsPerBlockX * settings.threadsPerBlockY);
+    settings.blocksPerGridY = height;
+    settings.blocksPerGridZ = 1;
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
 
     // free image
     stbi_image_free(data);
