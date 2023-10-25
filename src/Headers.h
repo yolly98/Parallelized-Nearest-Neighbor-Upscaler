@@ -6,7 +6,8 @@
 
 enum UpscalerType {
     UpscaleFromOriginalImage,
-    UpscaleFromUpscaledImage
+    UpscaleFromUpscaledImage,
+    UpscaleWithSingleThread
 };
 
 struct Settings {
@@ -30,12 +31,15 @@ struct Settings {
 
         switch (upscalerType)
         {
-        case UpscalerType::UpscaleFromOriginalImage:
-            std::cout << "--> Upscaler Type: UpscaleFromOriginalImage" << std::endl;
-            break;
-        case UpscalerType::UpscaleFromUpscaledImage:
-            std::cout << "--> Upscaler Type: UpscaleFromUpscaledImage" << std::endl;
-            break;
+            case UpscalerType::UpscaleFromOriginalImage:
+                std::cout << "--> Upscaler Type: UpscaleFromOriginalImage" << std::endl;
+                break;
+            case UpscalerType::UpscaleFromUpscaledImage:
+                std::cout << "--> Upscaler Type: UpscaleFromUpscaledImage" << std::endl;
+                break;
+            case UpscalerType::UpscaleWithSingleThread:
+                std::cout << "--> Upscaler Type: UpscaleWithSingleThread" << std::endl;
+                break;
         }
 
         printf("--> Threads per Block: (%d, %d, %d)\n", threadsPerBlockX, threadsPerBlockY, threadsPerBlockZ);

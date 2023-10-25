@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
         inputImageName = argv[1];
         upscaleFactor = atoi(argv[2]);
     } else {
-        inputImageName = "img/in-large.png";
+        inputImageName = "img/in-small.png";
         upscaleFactor = 2;
     }
 
@@ -110,6 +110,16 @@ int main(int argc, char* argv[])
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromUpscaledImage;
     gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+
+    // 
+    settings.threadsPerBlockX = 1;
+    settings.threadsPerBlockY = 1;
+    settings.threadsPerBlockZ = 1;
+    settings.blocksPerGridX = 1;
+    settings.blocksPerGridY = 1;
+    settings.blocksPerGridZ = 1;
+    settings.upscalerType = UpscalerType::UpscaleWithSingleThread;
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/fallimento.png");
 
     // free image
     stbi_image_free(data);
