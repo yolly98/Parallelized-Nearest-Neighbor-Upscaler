@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
     settings.upscalerType = UpscalerType::UpscaleFromUpscaledImage;
     gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
 
-    // 
+    // GPU upscaler with a single thread
     settings.threadsPerBlockX = 1;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = 1;
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleWithSingleThread;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/fallimento.png");
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU.png");
 
     // free image
     stbi_image_free(data);
