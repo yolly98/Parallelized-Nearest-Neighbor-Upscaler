@@ -2,6 +2,7 @@
 #include "device_launch_parameters.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
 #include <cstring>
 
@@ -13,14 +14,14 @@
 
 using namespace std;
 
-__global__ void upscale(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel)
+__global__ void upscaleFromOriginalImage(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel)
 {
     // get the pixel position in the original image vector
     uint32_t oldIndex = ((((blockIdx.y * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y) * blockDim.x) + threadIdx.x) * bytePerPixel;
 
     // convert the position in a matrix notation
     uint32_t i = oldIndex / (width * bytePerPixel);
-    uint32_t j = oldIndex % (i * width * bytePerPixel);
+    uint32_t j = oldIndex - (i * width * bytePerPixel);
 
     // compute the position of the first pixel to duplicate in upscaled image
     uint32_t newi = i * upscaleFactor;
@@ -31,7 +32,7 @@ __global__ void upscale(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_
     for (int m = newi; m < newi + upscaleFactor; m++) {
         for (int n = newj; n < newj + upscaleFactor * bytePerPixel; n += bytePerPixel) {
             // compute the pixel position in the upscaled image vector
-            uint32_t newIndex = n + m * upscaledWidth * bytePerPixel;
+            uint32_t newIndex = m * upscaledWidth * bytePerPixel + n;
             
             // manage single channel if tridimensional version, else manage all the others
             if (blockDim.z == 1) {
@@ -42,6 +43,29 @@ __global__ void upscale(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_
             }
         }
     }
+}
+
+__global__ void upscaleFromUpscaledImage(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel)
+{
+    // get the pixel position in the upscaled image vector
+    uint32_t newIndex = ((((blockIdx.y * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y) * blockDim.x) + threadIdx.x) * bytePerPixel;
+
+    // convert the position in a matrix notation
+    uint32_t newi = newIndex / (width * upscaleFactor * bytePerPixel);
+    uint32_t newj = (newIndex - (newi * width * upscaleFactor * bytePerPixel)) / bytePerPixel;
+
+    // compute the position of the pixel to copy from the original image
+    uint32_t i = newi / upscaleFactor;
+    uint32_t j = newj / upscaleFactor;
+    uint32_t oldIndex = (i * width + j) * bytePerPixel;
+
+    // manage single channel if tridimensional version, else manage all the others
+    if (blockDim.z == 1) {
+        for (int k = 0; k < bytePerPixel; k++)
+            upscaledImage[newIndex + k] = imageToUpscale[oldIndex + k];
+    } else {
+        upscaledImage[newIndex + threadIdx.z] = imageToUpscale[oldIndex + threadIdx.z];
+    }        
 }
 
 void gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor, Settings settings, uint8_t* data, uint32_t width, uint32_t height, uint32_t bytePerPixel, string imageName)
@@ -63,7 +87,15 @@ void gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor
 
     // start kernel execution
     timer.start();
-    upscale<< <grid, block >> > (d_data, d_out, width, upscaleFactor, bytePerPixel);
+    switch (settings.upscalerType)
+    {
+        case UpscalerType::UpscaleFromOriginalImage:
+            upscaleFromOriginalImage << <grid, block >> > (d_data, d_out, width, upscaleFactor, bytePerPixel);
+            break;
+        case UpscalerType::UpscaleFromUpscaledImage:
+            upscaleFromUpscaledImage << <grid, block >> > (d_data, d_out, width, upscaleFactor, bytePerPixel);
+            break;
+    }
     timer.stop();
 
     // wait for the end of the execution and retrieve results from GPU memory
@@ -72,6 +104,7 @@ void gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor
 
     // print the upscale duration
     float time = timer.getElapsedMilliseconds();
+    cout << "\n---------------------------------------------------------------" << endl;
     settings.print();
     cout << "[+] (GPU) Time needed: " << time << "ms" << endl;
 

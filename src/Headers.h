@@ -4,6 +4,11 @@
 #include <cstdint>
 #include <cstring>
 
+enum UpscalerType {
+    UpscaleFromOriginalImage,
+    UpscaleFromUpscaledImage
+};
+
 struct Settings {
     uint32_t threadsPerBlockX;
     uint32_t threadsPerBlockY;
@@ -13,19 +18,28 @@ struct Settings {
     uint32_t blocksPerGridY;
     uint32_t blocksPerGridZ;
 
+    UpscalerType upscalerType;
+
     Settings()
-        : threadsPerBlockX(0), threadsPerBlockY(0), threadsPerBlockZ(0), blocksPerGridX(0), blocksPerGridY(0), blocksPerGridZ(0) {}
-    Settings(uint32_t tpbX, uint32_t tpbY, uint32_t tpbZ, uint32_t bpgX, uint32_t bpgY, uint32_t bpgZ)
-        : threadsPerBlockX(tpbX), threadsPerBlockY(tpbY), threadsPerBlockZ(tpbZ), blocksPerGridX(bpgX), blocksPerGridY(bpgY), blocksPerGridZ(bpgZ) {}
+        : threadsPerBlockX(0), threadsPerBlockY(0), threadsPerBlockZ(0), blocksPerGridX(0), blocksPerGridY(0), blocksPerGridZ(0), upscalerType(UpscalerType::UpscaleFromOriginalImage) {}
+    Settings(uint32_t tpbX, uint32_t tpbY, uint32_t tpbZ, uint32_t bpgX, uint32_t bpgY, uint32_t bpgZ, UpscalerType ut)
+        : threadsPerBlockX(tpbX), threadsPerBlockY(tpbY), threadsPerBlockZ(tpbZ), blocksPerGridX(bpgX), blocksPerGridY(bpgY), blocksPerGridZ(bpgZ), upscalerType(ut) {}
 
     void print() {
         std::cout << "\n[+] GPU Upscale Settings: " << std::endl;
-        std::cout << "--> Threads per Block X: " << threadsPerBlockX << std::endl;
-        std::cout << "--> Threads per Block Y: " << threadsPerBlockY << std::endl;
-        std::cout << "--> Threads per Block Z: " << threadsPerBlockZ << std::endl;
-        std::cout << "--> Blocks per Grid X: " << blocksPerGridX << std::endl;
-        std::cout << "--> Blocks per Grid Y: " << blocksPerGridY << std::endl;
-        std::cout << "--> Blocks per Grid Z: " << blocksPerGridZ << std::endl;
+
+        switch (upscalerType)
+        {
+        case UpscalerType::UpscaleFromOriginalImage:
+            std::cout << "--> Upscaler Type: UpscaleFromOriginalImage" << std::endl;
+            break;
+        case UpscalerType::UpscaleFromUpscaledImage:
+            std::cout << "--> Upscaler Type: UpscaleFromUpscaledImage" << std::endl;
+            break;
+        }
+
+        printf("--> Threads per Block: (%d, %d, %d)\n", threadsPerBlockX, threadsPerBlockY, threadsPerBlockZ);
+        printf("--> Blocks per Grid: (%d, %d, %d)\n", blocksPerGridX, blocksPerGridY, blocksPerGridZ);
     }
 };
 
