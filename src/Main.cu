@@ -48,7 +48,11 @@ int main(int argc, char* argv[])
     size_t upscaledSize = height * upscaleFactor * width * upscaleFactor * bytePerPixel * sizeof(uint8_t);
     
     // single core CPU upscaler
-    cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel);
+    cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel, "img/CPU1.png");
+
+    // multi core CPU upscaler
+    cout << "\n---------------------------------------------------------------" << endl << endl;
+    cpuMultithreadUpscaler(16, upscaleFactor, data, width, height, bytePerPixel, "img/CPU2.png");
     
     // GPU upscaler with one thread per block using UpscaleFromOrginalImage kernel
     Settings settings;
@@ -79,7 +83,7 @@ int main(int argc, char* argv[])
     settings.blocksPerGridY = height;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromOriginalImage;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU1.png");
     
     // GPU upscaler with tridimensional matrix of threads and bidimensional matrix of blocks using UpscaleFromOrginalImage kernel
     settings.threadsPerBlockX = 4;
@@ -99,7 +103,7 @@ int main(int argc, char* argv[])
     settings.blocksPerGridY = height * upscaleFactor;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromUpscaledImage;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU2.png");
 
     // GPU upscaler with tridimensional matrix of threads and bidimensional matrix of blocks using UpscaleFromUpscaledImage kernel
     settings.threadsPerBlockX = 4;
@@ -119,7 +123,7 @@ int main(int argc, char* argv[])
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleWithSingleThread;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU.png");
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU3.png");
 
     // free image
     stbi_image_free(data);

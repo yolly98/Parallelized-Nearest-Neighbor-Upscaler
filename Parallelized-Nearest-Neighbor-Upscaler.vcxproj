@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\CpuMultithreadUpscaler.cpp" />
     <ClCompile Include="src\CpuUpscaler.cpp" />
   </ItemGroup>
   <ItemGroup>

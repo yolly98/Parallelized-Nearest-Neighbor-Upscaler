@@ -1,5 +1,8 @@
 #include <iostream>
 #include <cstring>
+#include <thread>
+#include <vector>
+#include <cmath>
 
 #include "../lib/stb_image.h"
 #include "../lib/stb_image_write.h"
@@ -9,18 +12,12 @@
 
 using namespace std;
 
-void cpuUpscaler(uint8_t upscaleFactor, uint8_t* data, size_t width, size_t height, uint32_t bytePerPixel, string imageName)
+void worker(const Pixel* originalImage, Pixel* upscaledImage, uint32_t start, uint32_t stop, uint8_t upscaleFactor, size_t width, size_t height)
 {
-    Pixel* originalImage = (Pixel*)data;
-    Pixel* upscaledImage = new Pixel[(width * upscaleFactor) * (height * upscaleFactor)];
-
-    size_t sizeOriginalImage = width * height; 
     uint32_t upscaledWidth = width * upscaleFactor;
 
-    Timer timer;
-
-    // iterate the pixels of the original image
-    for (size_t oldIndex = 0; oldIndex < sizeOriginalImage; oldIndex++) {
+    // iterate the pixels of the original image assigned to this thread
+    for (size_t oldIndex = start; oldIndex < stop; oldIndex++) {
         // convert the position in a matrix notation
         uint32_t i = oldIndex / width;
         uint32_t j = oldIndex - (i * width);
@@ -38,10 +35,34 @@ void cpuUpscaler(uint8_t upscaleFactor, uint8_t* data, size_t width, size_t heig
             }
         }
     }
+}
 
+void cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* data, size_t width, size_t height, uint32_t bytePerPixel, string imageName)
+{
+    const Pixel* originalImage = (Pixel*)data;
+    Pixel* upscaledImage = new Pixel[(width * upscaleFactor) * (height * upscaleFactor)];
+
+    size_t sizeOriginalImage = width * height;
+    size_t sizeRowUpscaledImage = width * upscaleFactor;
+
+    Timer timer;
+    
+    // partition pixels to copy among the different threads
+    vector<thread> threads;
+    uint32_t pixelToManage = ceil(sizeOriginalImage / numThread);
+    for (int i = 0; i < numThread; ++i) {
+        uint32_t start = i * pixelToManage;
+        uint32_t stop = (start + pixelToManage) <= sizeOriginalImage ? (start + pixelToManage) : sizeOriginalImage;
+        threads.emplace_back(worker, originalImage, upscaledImage, start, stop, upscaleFactor, width, height);
+    }
+
+    // execute and wait the threads
+    for (auto& thread : threads)
+        thread.join();
+    
     // print the upscale duration
     float time = timer.getElapsedMilliseconds();
-    cout << "[+] (CPU) Time needed: " << time << "ms" << endl;
+    cout << "[+] (CPU " << numThread << " thread) Time needed: " << time << "ms" << endl;
 
     // save image as PNG
     if (imageName != "") {

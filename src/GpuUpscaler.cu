@@ -71,8 +71,9 @@ __global__ void upscaleFromUpscaledImage(uint8_t* imageToUpscale, uint8_t* upsca
 __global__ void upscaleWithSingleThread(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t width, uint32_t height, uint8_t upscaleFactor, uint8_t bytePerPixel)
 {
     size_t imageToUpscaleSize = width * bytePerPixel * height;
+    size_t upscaledWidth = width * upscaleFactor;
     
-    for (size_t oldIndex = 0; oldIndex < imageToUpscaleSize; oldIndex += 4) {
+    for (size_t oldIndex = 0; oldIndex < imageToUpscaleSize; oldIndex += bytePerPixel) {
         // convert the position in a matrix notation
         uint32_t i = oldIndex / (width * bytePerPixel);
         uint32_t j = oldIndex - (i * width * bytePerPixel);
@@ -80,7 +81,6 @@ __global__ void upscaleWithSingleThread(uint8_t* imageToUpscale, uint8_t* upscal
         // compute the position of the first pixel to duplicate in upscaled image
         uint32_t newi = i * upscaleFactor;
         uint32_t newj = j * upscaleFactor;
-        uint32_t upscaledWidth = width * upscaleFactor;
 
         // iterate the pixel to duplicate in upscaled image
         for (int m = newi; m < newi + upscaleFactor; m++) {
