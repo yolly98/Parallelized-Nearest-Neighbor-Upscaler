@@ -49,19 +49,19 @@ struct Settings {
     std::string toString() {
         std::string str;
 
-        str = str + std::to_string(threadsPerBlockX) + "," + std::to_string(threadsPerBlockY) + "," + std::to_string(threadsPerBlockZ);
-        str = str + "," + std::to_string(blocksPerGridX) + "," + std::to_string(blocksPerGridY) + "," + std::to_string(blocksPerGridZ);
+        str = str + std::to_string(threadsPerBlockX) + ";" + std::to_string(threadsPerBlockY) + ";" + std::to_string(threadsPerBlockZ);
+        str = str + ";" + std::to_string(blocksPerGridX) + ";" + std::to_string(blocksPerGridY) + ";" + std::to_string(blocksPerGridZ);
 
         switch (upscalerType)
         {
         case UpscalerType::UpscaleFromOriginalImage:
-            str = str + "," + "\"UpscaleFromOriginalImage\"";
+            str = str + ";" + "\"UpscaleFromOriginalImage\"";
             break;
         case UpscalerType::UpscaleFromUpscaledImage:
-            str = str + "," + "\"UpscaleFromUpscaledImage\"";
+            str = str + ";" + "\"UpscaleFromUpscaledImage\"";
             break;
         case UpscalerType::UpscaleWithSingleThread:
-            str = str + "," + "\"UpscaleWithSingleThread\"";
+            str = str + ";" + "\"UpscaleWithSingleThread\"";
             break;
         }
 
