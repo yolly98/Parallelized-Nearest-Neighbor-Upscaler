@@ -33,14 +33,14 @@ int main(int argc, char* argv[])
 
             uint32_t numThreads = atoi(argv[5]);
             uint32_t numRepetitions = atoi(argv[6]);
-            string result = to_string(numThreads);
+            string result = to_string(upscaleFactor) + ";" + to_string(numThreads);
 
             for (uint32_t i = 0; i < numRepetitions; i++) {
                 if (numThreads == 1) {
                     float elapsedTime = cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel);
                     result = result + ";" + to_string(elapsedTime);
                 } else {
-                    float elapsedTime = cpuMultithreadUpscaler(16, upscaleFactor, data, width, height, bytePerPixel);
+                    float elapsedTime = cpuMultithreadUpscaler(numThreads, upscaleFactor, data, width, height, bytePerPixel);
                     result = result + ";" + to_string(elapsedTime);
                 }
             }
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
             settings.blocksPerGridY = atoi(argv[9]);
             settings.blocksPerGridZ = atoi(argv[10]);
             settings.upscalerType = static_cast<UpscalerType>(atoi(argv[11]));
-            string result = settings.toString();
+            string result = to_string(upscaleFactor) + ";" + settings.toString();
 
             for (uint32_t i = 0; i < numRepetitions; i++) {
                 float elapsedTime = gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
