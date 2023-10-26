@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void cpuUpscaler(uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, string imageName)
+float cpuUpscaler(uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, string imageName)
 {
     uint8_t* upscaledImage = new uint8_t[(width * upscaleFactor * bytePerPixel) * (height * upscaleFactor)];
 
@@ -55,4 +55,5 @@ void cpuUpscaler(uint8_t upscaleFactor, uint8_t* originalImage, size_t width, si
     }
 
     delete[] upscaledImage;
+    return time;
 }

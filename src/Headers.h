@@ -2,7 +2,7 @@
 #define _HEADERS_H
 
 #include <cstdint>
-#include <cstring>
+#include <string>
 
 enum UpscalerType {
     UpscaleFromOriginalImage,
@@ -45,6 +45,28 @@ struct Settings {
         printf("--> Threads per Block: (%d, %d, %d)\n", threadsPerBlockX, threadsPerBlockY, threadsPerBlockZ);
         printf("--> Blocks per Grid: (%d, %d, %d)\n", blocksPerGridX, blocksPerGridY, blocksPerGridZ);
     }
+
+    std::string toString() {
+        std::string str;
+
+        str = str + std::to_string(threadsPerBlockX) + "," + std::to_string(threadsPerBlockY) + "," + std::to_string(threadsPerBlockZ);
+        str = str + "," + std::to_string(blocksPerGridX) + "," + std::to_string(blocksPerGridY) + "," + std::to_string(blocksPerGridZ);
+
+        switch (upscalerType)
+        {
+        case UpscalerType::UpscaleFromOriginalImage:
+            str = str + "," + "\"UpscaleFromOriginalImage\"";
+            break;
+        case UpscalerType::UpscaleFromUpscaledImage:
+            str = str + "," + "\"UpscaleFromUpscaledImage\"";
+            break;
+        case UpscalerType::UpscaleWithSingleThread:
+            str = str + "," + "\"UpscaleWithSingleThread\"";
+            break;
+        }
+
+        return str;
+    }
 };
 
 enum Channels {
@@ -55,8 +77,8 @@ enum Channels {
     RGB_ALPHA = 4
 };
 
-void cpuUpscaler(uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, std::string imageName = "");
-void cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, std::string imageName = "");
-void gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor, Settings settings, uint8_t* data, uint32_t width, uint32_t height, uint32_t bytePerPixel, std::string imageName = "");
+float cpuUpscaler(uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, std::string imageName = "");
+float cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, std::string imageName = "");
+float gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor, Settings settings, uint8_t* data, uint32_t width, uint32_t height, uint32_t bytePerPixel, std::string imageName = "");
 
 #endif  // _HEADERS_H

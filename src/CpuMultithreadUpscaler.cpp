@@ -40,7 +40,7 @@ void worker(const uint8_t* originalImage, uint8_t* upscaledImage, uint32_t start
     }
 }
 
-void cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, string imageName)
+float cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, string imageName)
 {
     uint8_t* upscaledImage = new uint8_t[(width * upscaleFactor * bytePerPixel) * (height * upscaleFactor)];
 
@@ -76,4 +76,5 @@ void cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* 
     }
 
     delete[] upscaledImage;
+    return time;
 }

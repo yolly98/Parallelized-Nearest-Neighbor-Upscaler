@@ -96,7 +96,7 @@ __global__ void upscaleWithSingleThread(uint8_t* imageToUpscale, uint8_t* upscal
     }
 }
 
-void gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor, Settings settings, uint8_t* data, uint32_t width, uint32_t height, uint32_t bytePerPixel, string imageName)
+float gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor, Settings settings, uint8_t* data, uint32_t width, uint32_t height, uint32_t bytePerPixel, string imageName)
 {
     uint8_t* upscaledImage = new uint8_t[upscaledSize];
 
@@ -152,4 +152,6 @@ void gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor
     delete[] upscaledImage;
     cudaFree(d_data);
     cudaFree(d_out);
+
+    return time;
 }
