@@ -33,8 +33,9 @@ void worker(const uint8_t* originalImage, uint8_t* upscaledImage, uint32_t start
                 uint32_t newIndex = m * upscaledWidth * bytePerPixel + n;
 
                 // copy all the channels
-                for (int k = 0; k < bytePerPixel; k++)
+                for (int k = 0; k < bytePerPixel; k++) {
                     upscaledImage[newIndex + k] = originalImage[oldIndex + k];
+                }
             }
         }
     }
@@ -51,10 +52,11 @@ float cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t*
     
     // partition pixels to copy among the different threads
     vector<thread> threads;
-    uint32_t pixelToManage = ceil(sizeOriginalImage / numThread);
+    uint32_t pixelToManage = ceil((double)(sizeOriginalImage / bytePerPixel / numThread));
+
     for (int i = 0; i < numThread; ++i) {
-        uint32_t start = i * pixelToManage;
-        uint32_t stop = (start + pixelToManage) <= sizeOriginalImage ? (start + pixelToManage) : sizeOriginalImage;
+        uint32_t start = i * pixelToManage * bytePerPixel;
+        uint32_t stop = (start + pixelToManage * bytePerPixel) <= sizeOriginalImage ? (start + pixelToManage * bytePerPixel) : sizeOriginalImage;
         threads.emplace_back(worker, originalImage, upscaledImage, start, stop, upscaleFactor, width, height, bytePerPixel);
     }
 
