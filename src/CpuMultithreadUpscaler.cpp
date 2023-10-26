@@ -12,15 +12,15 @@
 
 using namespace std;
 
-void worker(const Pixel* originalImage, Pixel* upscaledImage, uint32_t start, uint32_t stop, uint8_t upscaleFactor, size_t width, size_t height)
+void worker(const uint8_t* originalImage, uint8_t* upscaledImage, uint32_t start, uint32_t stop, uint8_t upscaleFactor, size_t width, size_t height, uint32_t bytePerPixel)
 {
     uint32_t upscaledWidth = width * upscaleFactor;
 
     // iterate the pixels of the original image assigned to this thread
-    for (size_t oldIndex = start; oldIndex < stop; oldIndex++) {
+    for (size_t oldIndex = start; oldIndex < stop; oldIndex += bytePerPixel) {
         // convert the position in a matrix notation
-        uint32_t i = oldIndex / width;
-        uint32_t j = oldIndex - (i * width);
+        uint32_t i = oldIndex / (width * bytePerPixel);
+        uint32_t j = oldIndex - (i * width * bytePerPixel);
 
         // compute the position of the first pixel to duplicate in upscaled image
         uint32_t newi = i * upscaleFactor;
@@ -28,21 +28,23 @@ void worker(const Pixel* originalImage, Pixel* upscaledImage, uint32_t start, ui
 
         // iterate the pixel to duplicate in upscaled image
         for (int m = newi; m < newi + upscaleFactor; m++) {
-            for (int n = newj; n < newj + upscaleFactor; n++) {
-                // copy the pixel in the upscaled image
-                uint32_t newIndex = m * upscaledWidth + n;
-                upscaledImage[newIndex] = originalImage[oldIndex];
+            for (int n = newj; n < newj + upscaleFactor * bytePerPixel; n += bytePerPixel) {
+                // compute the pixel position in the upscaled image vector
+                uint32_t newIndex = m * upscaledWidth * bytePerPixel + n;
+
+                // copy all the channels
+                for (int k = 0; k < bytePerPixel; k++)
+                    upscaledImage[newIndex + k] = originalImage[oldIndex + k];
             }
         }
     }
 }
 
-void cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* data, size_t width, size_t height, uint32_t bytePerPixel, string imageName)
+void cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, string imageName)
 {
-    const Pixel* originalImage = (Pixel*)data;
-    Pixel* upscaledImage = new Pixel[(width * upscaleFactor) * (height * upscaleFactor)];
+    uint8_t* upscaledImage = new uint8_t[(width * upscaleFactor * bytePerPixel) * (height * upscaleFactor)];
 
-    size_t sizeOriginalImage = width * height;
+    size_t sizeOriginalImage = width * bytePerPixel * height;
     size_t sizeRowUpscaledImage = width * upscaleFactor;
 
     Timer timer;
@@ -53,7 +55,7 @@ void cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* 
     for (int i = 0; i < numThread; ++i) {
         uint32_t start = i * pixelToManage;
         uint32_t stop = (start + pixelToManage) <= sizeOriginalImage ? (start + pixelToManage) : sizeOriginalImage;
-        threads.emplace_back(worker, originalImage, upscaledImage, start, stop, upscaleFactor, width, height);
+        threads.emplace_back(worker, originalImage, upscaledImage, start, stop, upscaleFactor, width, height, bytePerPixel);
     }
 
     // execute and wait the threads

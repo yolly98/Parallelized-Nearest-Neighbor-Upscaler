@@ -4,18 +4,6 @@
 #include <cstdint>
 #include <cstring>
 
-struct Pixel {
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-    uint8_t alpha;
-
-    Pixel() :
-        red(255), green(255), blue(255), alpha(255) {};
-    Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a) :
-        red(r), green(g), blue(b), alpha(a) {};
-};
-
 enum UpscalerType {
     UpscaleFromOriginalImage,
     UpscaleFromUpscaledImage,
@@ -67,8 +55,8 @@ enum Channels {
     RGB_ALPHA = 4
 };
 
-void cpuUpscaler(uint8_t upscaleFactor, uint8_t* data, size_t width, size_t height, uint32_t bytePerPixel, std::string imageName = "");
-void cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* data, size_t width, size_t height, uint32_t bytePerPixel, std::string imageName = "");
+void cpuUpscaler(uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, std::string imageName = "");
+void cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, std::string imageName = "");
 void gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor, Settings settings, uint8_t* data, uint32_t width, uint32_t height, uint32_t bytePerPixel, std::string imageName = "");
 
 #endif  // _HEADERS_H

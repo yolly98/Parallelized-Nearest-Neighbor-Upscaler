@@ -88,7 +88,7 @@ __global__ void upscaleWithSingleThread(uint8_t* imageToUpscale, uint8_t* upscal
                 // compute the pixel position in the upscaled image vector
                 uint32_t newIndex = m * upscaledWidth * bytePerPixel + n;
 
-                // manage single channel if tridimensional version, else manage all the others
+                // copy all the channels
                 for (int k = 0; k < bytePerPixel; k++)
                     upscaledImage[newIndex + k] = imageToUpscale[oldIndex + k];
             }
