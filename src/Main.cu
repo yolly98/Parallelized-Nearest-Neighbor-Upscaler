@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
         inputImageName = argv[1];
         upscaleFactor = atoi(argv[2]);
     } else {
-        inputImageName = "img/in-small.png";
+        inputImageName = "img/in-large.png";
         upscaleFactor = 2;
     }
 
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
     settings.threadsPerBlockX = 32;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = 1;
-    settings.blocksPerGridX = (width * height) / settings.threadsPerBlockX;
+    settings.blocksPerGridX = ((width * height) + settings.threadsPerBlockX - 1) / settings.threadsPerBlockX;
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromOriginalImage;
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
     settings.threadsPerBlockX = 32;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = bytePerPixel;
-    settings.blocksPerGridX = (width * height) / settings.threadsPerBlockX;
+    settings.blocksPerGridX = ((width * height) + settings.threadsPerBlockX - 1) / settings.threadsPerBlockX;
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromOriginalImage;
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
     settings.threadsPerBlockX = 32;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = 1;
-    settings.blocksPerGridX = (width * height * upscaleFactor * upscaleFactor) / settings.threadsPerBlockX;
+    settings.blocksPerGridX = ((width * height * settings.threadsPerBlockZ * upscaleFactor * upscaleFactor) + (settings.threadsPerBlockX * settings.threadsPerBlockZ) - 1) / (settings.threadsPerBlockX * settings.threadsPerBlockZ);
     settings.blocksPerGridY =  1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromUpscaledImage;
@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
     settings.threadsPerBlockX = 32;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = bytePerPixel;
-    settings.blocksPerGridX = (width * height * upscaleFactor * upscaleFactor) / settings.threadsPerBlockX;
+    settings.blocksPerGridX = ((width * height * settings.threadsPerBlockZ * upscaleFactor * upscaleFactor) + (settings.threadsPerBlockX * settings.threadsPerBlockZ) - 1) / (settings.threadsPerBlockX * settings.threadsPerBlockZ);
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromUpscaledImage;

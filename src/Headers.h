@@ -32,10 +32,10 @@ struct Settings {
         switch (ut) 
         {
             case UpscalerType::UpscaleFromOriginalImage:
-                blocksPerGridX = (width * height) / threadsPerBlockX;
+                blocksPerGridX = ((width * height) + threadsPerBlockX - 1) / threadsPerBlockX;
                 break;
             case UpscalerType::UpscaleFromUpscaledImage:
-                blocksPerGridX = (width * height * upscaleFactor * upscaleFactor) / threadsPerBlockX;
+                blocksPerGridX = ((width * height * threadsPerBlockZ * upscaleFactor * upscaleFactor) + (threadsPerBlockX * threadsPerBlockZ) - 1) / (threadsPerBlockX * threadsPerBlockZ);
                 break;
             case UpscalerType::UpscaleWithSingleThread:
                 blocksPerGridX = 1;
