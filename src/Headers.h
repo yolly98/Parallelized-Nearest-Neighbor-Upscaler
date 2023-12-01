@@ -25,6 +25,23 @@ struct Settings {
         : threadsPerBlockX(0), threadsPerBlockY(0), threadsPerBlockZ(0), blocksPerGridX(0), blocksPerGridY(0), blocksPerGridZ(0), upscalerType(UpscalerType::UpscaleFromOriginalImage) {}
     Settings(uint32_t tpbX, uint32_t tpbY, uint32_t tpbZ, uint32_t bpgX, uint32_t bpgY, uint32_t bpgZ, UpscalerType ut)
         : threadsPerBlockX(tpbX), threadsPerBlockY(tpbY), threadsPerBlockZ(tpbZ), blocksPerGridX(bpgX), blocksPerGridY(bpgY), blocksPerGridZ(bpgZ), upscalerType(ut) {}
+    Settings(uint32_t tpbX, uint32_t tpbZ, UpscalerType ut, uint32_t width, uint32_t height, uint8_t upscaleFactor)
+        : threadsPerBlockX(tpbX), threadsPerBlockY(1), threadsPerBlockZ(tpbZ), blocksPerGridY(1), blocksPerGridZ(1), upscalerType(ut) {
+        // compute the number of blocks per grid on x-axis
+        switch (ut) 
+        {
+            case UpscalerType::UpscaleFromOriginalImage:
+                blocksPerGridX = (width * height) / threadsPerBlockX;
+                break;
+            case UpscalerType::UpscaleFromUpscaledImage:
+                blocksPerGridX = (width * height * upscaleFactor * upscaleFactor) / threadsPerBlockX;
+                break;
+            case UpscalerType::UpscaleWithSingleThread:
+                blocksPerGridX = 1;
+                break;
+        }
+    }
+
 
     void print() {
         std::cout << "\n[+] GPU Upscale Settings: " << std::endl;

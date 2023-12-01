@@ -17,7 +17,8 @@ using namespace std;
 __global__ void upscaleFromOriginalImage(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel)
 {
     // get the pixel position in the original image vector
-    uint32_t oldIndex = ((((blockIdx.y * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y) * blockDim.x) + threadIdx.x) * bytePerPixel;
+    // uint32_t oldIndex = ((((blockIdx.y * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y) * blockDim.x) + threadIdx.x) * bytePerPixel;
+    uint32_t oldIndex = ((blockIdx.x * blockDim.x) + threadIdx.x) * bytePerPixel;
 
     // convert the position in a matrix notation
     uint32_t i = oldIndex / (width * bytePerPixel);
@@ -48,7 +49,8 @@ __global__ void upscaleFromOriginalImage(uint8_t* imageToUpscale, uint8_t* upsca
 __global__ void upscaleFromUpscaledImage(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel)
 {
     // get the pixel position in the upscaled image vector
-    uint32_t newIndex = ((((blockIdx.y * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y) * blockDim.x) + threadIdx.x) * bytePerPixel;
+    // uint32_t newIndex = ((((blockIdx.y * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y) * blockDim.x) + threadIdx.x) * bytePerPixel;
+    uint32_t newIndex = ((blockIdx.x * blockDim.x) + threadIdx.x) * bytePerPixel;
 
     // convert the position in a matrix notation
     uint32_t newi = newIndex / (width * upscaleFactor * bytePerPixel);

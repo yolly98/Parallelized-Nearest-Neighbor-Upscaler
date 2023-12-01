@@ -21,7 +21,8 @@ int main(int argc, char* argv[])
     if (argc >= 2) {
         inputImageName = argv[1];
         upscaleFactor = atoi(argv[2]);
-    } else {
+    }
+    else {
         inputImageName = "img/in-small.png";
         upscaleFactor = 2;
     }
@@ -46,16 +47,18 @@ int main(int argc, char* argv[])
     // compute the new upscaled image size
     size_t originalSize = height * width * bytePerPixel * sizeof(uint8_t);
     size_t upscaledSize = height * upscaleFactor * width * upscaleFactor * bytePerPixel * sizeof(uint8_t);
-    
+
+    Settings settings;
+
+    /*
     // single core CPU upscaler
     cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel, "img/CPU1.png");
 
     // multi core CPU upscaler
     cout << "\n---------------------------------------------------------------" << endl << endl;
     cpuMultithreadUpscaler(16, upscaleFactor, data, width, height, bytePerPixel, "img/CPU2.png");
-    
+
     // GPU upscaler with one thread per block using UpscaleFromOrginalImage kernel
-    Settings settings;
     settings.threadsPerBlockX = 1;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = 1;
@@ -74,7 +77,7 @@ int main(int argc, char* argv[])
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromOriginalImage;
     gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU1.png");
-    
+
     // GPU upscaler in which a threads manages a pixel channes and using UpscaleFromOrginalImage kernel
     settings.threadsPerBlockX = 32;
     settings.threadsPerBlockY = 1;
@@ -91,7 +94,7 @@ int main(int argc, char* argv[])
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = 1;
     settings.blocksPerGridX = (width * height * upscaleFactor * upscaleFactor) / settings.threadsPerBlockX;
-    settings.blocksPerGridY =  1;
+    settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromUpscaledImage;
     gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU3.png");
@@ -117,6 +120,7 @@ int main(int argc, char* argv[])
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleWithSingleThread;
     gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU5.png");
+    */
 
     // free image
     stbi_image_free(data);

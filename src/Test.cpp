@@ -50,25 +50,18 @@ int main(int argc, char* argv[])
             file.write(result.c_str(), result.size());
         } else if (!strcmp(argv[4], "gpu")) {
 
-            uint32_t numRepetitions = atoi(argv[12]);
+            uint32_t numRepetitions = atoi(argv[8]);
 
             // compute the new upscaled image size
             size_t originalSize = height * width * bytePerPixel * sizeof(uint8_t);
             size_t upscaledSize = height * upscaleFactor * width * upscaleFactor * bytePerPixel * sizeof(uint8_t);
 
             // get upscale settings from parameters
-            Settings settings;
-            settings.threadsPerBlockX = atoi(argv[5]);
-            settings.threadsPerBlockY = atoi(argv[6]);
-            settings.threadsPerBlockZ = atoi(argv[7]);
-            settings.blocksPerGridX = atoi(argv[8]);
-            settings.blocksPerGridY = atoi(argv[9]);
-            settings.blocksPerGridZ = atoi(argv[10]);
-            settings.upscalerType = static_cast<UpscalerType>(atoi(argv[11]));
+            Settings settings(atoi(argv[5]), atoi(argv[6]), static_cast<UpscalerType>(atoi(argv[7])), width, height, upscaleFactor);
             string result = to_string(upscaleFactor) + ";" + settings.toString();
 
             for (uint32_t i = 0; i < numRepetitions; i++) {
-                float elapsedTime = gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+                float elapsedTime = gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU6.png");
                 result = result + ";" + to_string(elapsedTime);
             }
 
