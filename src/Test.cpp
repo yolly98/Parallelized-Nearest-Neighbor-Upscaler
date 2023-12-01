@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <iostream>
-#include <string>
 #include <fstream>
 #include <algorithm>
+#include <numeric>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../lib/stb_image.h"
@@ -60,12 +60,21 @@ int main(int argc, char* argv[])
             Settings settings(atoi(argv[5]), atoi(argv[6]), static_cast<UpscalerType>(atoi(argv[7])), width, height, upscaleFactor);
             string result = to_string(upscaleFactor) + ";" + settings.toString();
 
+            // repeate the tests
+            vector<float> elapsedTimes;
             for (uint32_t i = 0; i < numRepetitions; i++) {
-                float elapsedTime = gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU6.png");
-                result = result + ";" + to_string(elapsedTime);
+                float elapsedTime = gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+                elapsedTimes.push_back(elapsedTime);
             }
 
-            result += "\n";
+            // compute the arithmetic mean of the elapsed times, the 95% confidence interval and the worst time
+            float meanElapsedTime = std::accumulate(elapsedTimes.begin(), elapsedTimes.end(), 0.0) / elapsedTimes.size();
+            std::pair<float, float> confidenceInterval = computeCI(elapsedTimes);
+            auto it = std::max_element(elapsedTimes.begin(), elapsedTimes.end());
+            float worstElapsedTime = *it;
+
+            // convert and save the values in the CSV
+            result = result + ";" + to_string(meanElapsedTime) + ";" + to_string(confidenceInterval.first) + ";" + to_string(confidenceInterval.second) + ";" + to_string(worstElapsedTime) + "\n";
             std::replace(result.begin(), result.end(), '.', ',');
             file.write(result.c_str(), result.size());
         } else {

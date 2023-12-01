@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 enum UpscalerType {
     UpscaleFromOriginalImage,
@@ -97,5 +98,6 @@ enum Channels {
 float cpuUpscaler(uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, std::string imageName = "");
 float cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t* originalImage, size_t width, size_t height, uint32_t bytePerPixel, std::string imageName = "");
 float gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor, Settings settings, uint8_t* data, uint32_t width, uint32_t height, uint32_t bytePerPixel, std::string imageName = "");
+std::pair<float, float> computeCI(const std::vector<float>& values);
 
 #endif  // _HEADERS_H
