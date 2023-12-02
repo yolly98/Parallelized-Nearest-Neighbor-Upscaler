@@ -12,6 +12,7 @@
 #include "../lib/stb_image_write.h"
 
 #include "Headers.h"
+#include "GpuTimer.cuh"
 
 using namespace std;
 
@@ -29,15 +30,40 @@ void saveImageToPNG(const char* filename, const float* imageData, int width, int
     delete[] byteImageData;
 }
 
-__global__ void copyImage(cudaTextureObject_t texObj, float* copiedImage, uint32_t width, uint32_t height, uint8_t bytePerPixel, size_t originalSize)
+__global__ void upscaleImage(cudaTextureObject_t texObj, float* upscaledImage, uint32_t width, uint32_t height, uint8_t bytePerPixel, size_t originalSize, uint32_t upscaleFactor)
 {
-    uint32_t oldIndex = (blockIdx.x * blockDim.x) + threadIdx.x;
-    uint32_t newIndex = ((blockIdx.x * blockDim.x) + threadIdx.x) * bytePerPixel;
+    uint32_t i = blockIdx.x * blockDim.x + threadIdx.x;
+    uint32_t j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (newIndex < originalSize) {
-        // convert the position in a matrix notation
-        uint32_t x = oldIndex / width;
-        uint32_t y = oldIndex - (x * width);
+    if (i < height && j < width) {
+        // compute the position of the first pixel to duplicate in upscaled image
+        uint32_t newi = i * upscaleFactor;
+        uint32_t newj = j * upscaleFactor;
+        uint32_t upscaledWidth = width * upscaleFactor;
+
+        // convert to normalized coordinates
+        float u = j / (float)width;
+        float v = i / (float)height;
+
+        // iterate the pixel to duplicate in upscaled image
+        for (int m = newi; m < newi + upscaleFactor; m++) {
+            for (int n = newj; n < newj + upscaleFactor; n++) {
+                // compute the pixel position in the upscaled image vector
+                uint32_t newIndex = (m * upscaledWidth + n) * bytePerPixel;
+
+                // copy the pixel
+                float4 pixelToCopy = tex2D<float4>(texObj, u, v);
+                memcpy(&upscaledImage[newIndex], &pixelToCopy, sizeof(float4));
+            }
+        }
+    }
+
+    /*
+    uint32_t x = blockIdx.x * blockDim.x + threadIdx.x;
+    uint32_t y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (x < height && y < width) {
+        uint32_t newIndex = (x * width + y) * bytePerPixel;
 
         // convert to normalized coordinates
         float u = y / (float)width;
@@ -45,11 +71,8 @@ __global__ void copyImage(cudaTextureObject_t texObj, float* copiedImage, uint32
 
         // copy the pixel
         float4 pixelToCopy = tex2D<float4>(texObj, u, v);
-        copiedImage[newIndex] = pixelToCopy.x;
-        copiedImage[newIndex + 1] = pixelToCopy.y;
-        copiedImage[newIndex + 2] = pixelToCopy.z;
-        copiedImage[newIndex + 3] = 1.0f;
-    }
+        memcpy(&copiedImage[newIndex], &pixelToCopy, sizeof(float4));
+    }*/
 }
 
 int main(int argc, char* argv[]) 
@@ -77,6 +100,9 @@ int main(int argc, char* argv[])
         cout << "[-] Image not found" << endl;
         return -1;
     }
+
+    // event based timer
+    GpuTimer timer;
 
     // ----------------------------------- Texture Setup -----------------------------------------
 
@@ -112,25 +138,29 @@ int main(int argc, char* argv[])
 
     // create array for the copied image
     size_t originalSize = height * width * bytePerPixel;
-    float* copiedImage = new float[originalSize];
+    size_t upscaledSize = originalSize * upscaleFactor * upscaleFactor;
+    float* copiedImage = new float[upscaledSize];
 
     // allocate GPU memory for output array 
     float* d_out;
-    cudaMalloc((void**)&d_out, originalSize * sizeof(float));
+    cudaMalloc((void**)&d_out, upscaledSize * sizeof(float));
 
     // define resources for the execution
-    dim3 block(128, 1, 1);
-    dim3 grid(((width * height) + 127) / 128, 1, 1);
+    dim3 block(32, 16);
+    dim3 grid((height + block.x - 1) / block.x, (width + block.y - 1) / block.y);
 
     // run the kernel
-    copyImage << <grid, block >> > (texObj, d_out, width, height, bytePerPixel, originalSize);
+    timer.start();
+    upscaleImage << <grid, block >> > (texObj, d_out, width, height, bytePerPixel, originalSize, upscaleFactor);
+    timer.stop();
+    cout << "[+] (GPU) Time needed: " << timer.getElapsedMilliseconds() << "ms" << endl;
 
     // retrieve result
     cudaDeviceSynchronize();
-    cudaMemcpy(copiedImage, d_out, originalSize * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(copiedImage, d_out, upscaledSize * sizeof(float), cudaMemcpyDeviceToHost);
 
     // save image
-    saveImageToPNG("img/TEST.png", copiedImage, width, height);
+    saveImageToPNG("img/TEST.png", copiedImage, width * upscaleFactor, height * upscaleFactor);
 
     // free device memory
     cudaDestroyTextureObject(texObj);
