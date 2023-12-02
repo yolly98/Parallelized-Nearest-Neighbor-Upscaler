@@ -34,7 +34,7 @@ if __name__ == '__main__':
                 parameters = [ LARGE_IMAGE['name'], upscale_factor, '"results/GPU_thread_per_channel_fromOriginalImage_large.csv"', '"gpu"', threads, LARGE_IMAGE['byte_per_pixel'], 0, REPETITIONS ]
                 execute(parameters)
     
-    print('[+] GPU (one thread per channel) with UpscaleFromOriginalImage')
+    print('[+] Completed GPU (one thread per channel) with UpscaleFromOriginalImage')
 
     # GPU (one thread per pixel) with UpscaleFromUpscaledImage
     for upscale_factor in range(*UPSCALE_RANGE):
@@ -44,7 +44,7 @@ if __name__ == '__main__':
             parameters = [ LARGE_IMAGE['name'], upscale_factor, '"results/GPU_thread_per_pixel_fromUpscaledImage_large.csv"', '"gpu"', threads, 1, 1, REPETITIONS ]
             execute(parameters)
     
-    print('[+] GPU (one thread per pixel) with UpscaleFromUpscaledImage')
+    print('[+] Completed GPU (one thread per pixel) with UpscaleFromUpscaledImage')
 
     # GPU (one thread per channel) with UpscaleFromUpscaledImage
     for upscale_factor in range(*UPSCALE_RANGE):
@@ -56,4 +56,4 @@ if __name__ == '__main__':
                 parameters = [ LARGE_IMAGE['name'], upscale_factor, '"results/GPU_thread_per_channel_fromUpscaledImage_large.csv"', '"gpu"', threads, LARGE_IMAGE['byte_per_pixel'], 1, REPETITIONS ]
                 execute(parameters)
     
-    print('[+] GPU (one thread per channel) with UpscaleFromUpscaledImage')
+    print('[+] Completed GPU (one thread per channel) with UpscaleFromUpscaledImage')
