@@ -38,8 +38,7 @@ __global__ void upscaleFromOriginalImage(uint8_t* imageToUpscale, uint8_t* upsca
             
                 // manage single channel if tridimensional version, else manage all the others
                 if (blockDim.z == 1) {
-                    for (int k = 0; k < bytePerPixel; k++)
-                        upscaledImage[newIndex + k] = imageToUpscale[oldIndex + k];
+                    memcpy(&upscaledImage[newIndex], &imageToUpscale[oldIndex], 4 * sizeof(uint8_t));
                 } else {
                     upscaledImage[newIndex + threadIdx.z] = imageToUpscale[oldIndex + threadIdx.z];
                 }
@@ -66,8 +65,7 @@ __global__ void upscaleFromUpscaledImage(uint8_t* imageToUpscale, uint8_t* upsca
 
         // manage single channel if tridimensional version, else manage all the others
         if (blockDim.z == 1) {
-            for (int k = 0; k < bytePerPixel; k++)
-                upscaledImage[newIndex + k] = imageToUpscale[oldIndex + k];
+            memcpy(&upscaledImage[newIndex], &imageToUpscale[oldIndex], 4 * sizeof(uint8_t));
         } else {
             upscaledImage[newIndex + threadIdx.z] = imageToUpscale[oldIndex + threadIdx.z];
         }      
