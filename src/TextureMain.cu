@@ -16,31 +16,28 @@
 
 using namespace std;
 
-__global__ void upscaleImage(cudaTextureObject_t texObj, uint8_t* upscaledImage, uint32_t width, uint32_t height, uint8_t bytePerPixel, size_t originalSize, uint32_t upscaleFactor)
+__global__ void upscaleImage(cudaTextureObject_t texObj, uint8_t* __restrict__ upscaledImage, uint32_t pixelsHandledByBlock, uint32_t pixelsHandledByThread, uint32_t width, uint32_t height, uint8_t bytePerPixel, uint32_t upscaleFactor)
 {
-    uint32_t i = blockIdx.x * blockDim.x + threadIdx.x;
-    uint32_t j = blockIdx.y * blockDim.y + threadIdx.y;
+    uint32_t startNewIndex = blockIdx.x * pixelsHandledByBlock + threadIdx.x * pixelsHandledByThread;
+    uint32_t upscaledWidth = width * upscaleFactor;
+    uint32_t upscaledSize = width * height * upscaleFactor * upscaleFactor;
+    
+    // iterate all pixels handled by this thread
+    for (uint32_t i = 0; i < pixelsHandledByThread; i++) {
+        // compute the coordinates of the pixel
+        uint32_t newIndex = startNewIndex + i;
 
-    if (i < height && j < width) {
-        // compute the position of the first pixel to duplicate in upscaled image
-        uint32_t newi = i * upscaleFactor;
-        uint32_t newj = j * upscaleFactor;
-        uint32_t upscaledWidth = width * upscaleFactor;
+        if (newIndex < upscaledSize) {
+            uint32_t x = newIndex / upscaledWidth;
+            uint32_t y = newIndex - (x * upscaledWidth);
 
-        // convert to normalized coordinates
-        float u = j / (float)width;
-        float v = i / (float)height;
+            // compute the coordinates of the pixel of the original image
+            uint32_t oldX = x / upscaleFactor;
+            uint32_t oldY = y / upscaleFactor;
 
-        // iterate the pixel to duplicate in upscaled image
-        for (int m = newi; m < newi + upscaleFactor; m++) {
-            for (int n = newj; n < newj + upscaleFactor; n++) {
-                // compute the pixel position in the upscaled image vector
-                uint32_t newIndex = (m * upscaledWidth + n) * bytePerPixel;
-
-                // copy the pixel
-                uchar4  pixelToCopy = tex2D<uchar4>(texObj, u, v);
-                memcpy(&upscaledImage[newIndex], &pixelToCopy, sizeof(uchar4));
-            }
+            // copy the pixel
+            uchar4  pixelToCopy = tex2D<uchar4>(texObj, oldY, oldX);
+            memcpy(&upscaledImage[newIndex * bytePerPixel], &pixelToCopy, sizeof(uchar4));
         }
     }
 }
@@ -57,7 +54,7 @@ int main(int argc, char* argv[])
         upscaleFactor = atoi(argv[2]);
     }
     else {
-        inputImageName = "img/in-small.png";
+        inputImageName = "img/in-large.png";
         upscaleFactor = 2;
     }
 
@@ -97,7 +94,7 @@ int main(int argc, char* argv[])
     texDesc.addressMode[1] = cudaAddressModeWrap;
     texDesc.filterMode = cudaFilterModePoint;
     texDesc.readMode = cudaReadModeElementType;
-    texDesc.normalizedCoords = 1;
+    texDesc.normalizedCoords = 0;
 
     // create texture object
     cudaTextureObject_t texObj = 0;
@@ -115,12 +112,14 @@ int main(int argc, char* argv[])
     cudaMalloc((void**)&d_out, upscaledSize);
 
     // define resources for the execution
-    dim3 block(32, 16);
-    dim3 grid((height + block.x - 1) / block.x, (width + block.y - 1) / block.y);
+    dim3 block(128, 1, 1);
+    dim3 grid(((width * height * upscaleFactor * upscaleFactor) + block.x - 1) / block.x, 1, 1);
+    uint32_t pixelsHandledByThread = 1;
+    uint32_t pixelsHandledByBlock = block.x * pixelsHandledByThread;
 
     // run the kernel
     timer.start();
-    upscaleImage << <grid, block >> > (texObj, d_out, width, height, bytePerPixel, originalSize, upscaleFactor);
+    upscaleImage << <grid, block >> > (texObj, d_out, pixelsHandledByBlock, pixelsHandledByThread, width, height, bytePerPixel, upscaleFactor);
     timer.stop();
     cout << "[+] (GPU) Time needed: " << timer.getElapsedMilliseconds() << "ms" << endl;
 
