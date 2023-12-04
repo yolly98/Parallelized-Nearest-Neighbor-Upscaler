@@ -30,6 +30,10 @@ __global__ void upscaleFromOriginalImage(uint8_t* imageToUpscale, uint8_t* upsca
         uint32_t newj = j * upscaleFactor;
         uint32_t upscaledWidth = width * upscaleFactor;
 
+        // read the pixel to copy
+        uchar4 pixelToCopy;
+        memcpy(&pixelToCopy, &imageToUpscale[oldIndex], 4 * sizeof(uint8_t));
+
         // iterate the pixel to duplicate in upscaled image
         for (int m = newi; m < newi + upscaleFactor; m++) {
             for (int n = newj; n < newj + upscaleFactor * bytePerPixel; n += bytePerPixel) {
@@ -38,7 +42,7 @@ __global__ void upscaleFromOriginalImage(uint8_t* imageToUpscale, uint8_t* upsca
             
                 // manage single channel if tridimensional version, else manage all the others
                 if (blockDim.z == 1) {
-                    memcpy(&upscaledImage[newIndex], &imageToUpscale[oldIndex], 4 * sizeof(uint8_t));
+                    memcpy(&upscaledImage[newIndex], &pixelToCopy, 4 * sizeof(uint8_t));
                 } else {
                     upscaledImage[newIndex + threadIdx.z] = imageToUpscale[oldIndex + threadIdx.z];
                 }
