@@ -50,66 +50,53 @@ int main(int argc, char* argv[])
 
     Settings settings;
 
-/*
+    /*
     // single core CPU upscaler
-    cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel);
+    cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel, "img/CPU1.png");
 
     // multi core CPU upscaler
     cout << "\n---------------------------------------------------------------" << endl << endl;
-    cpuMultithreadUpscaler(16, upscaleFactor, data, width, height, bytePerPixel);
+    cpuMultithreadUpscaler(16, upscaleFactor, data, width, height, bytePerPixel, "img/CPU2.png");
 
     // GPU upscaler with one thread per block using UpscaleFromOrginalImage kernel
-     settings.threadsPerBlockX = 1;
-    settings.threadsPerBlockY = 1;
-    settings.threadsPerBlockZ = 1;
-    settings.blocksPerGridX = width * height;
-    settings.blocksPerGridY = 1;
-    settings.blocksPerGridZ = 1;
-    settings.upscalerType = UpscalerType::UpscaleFromOriginalImage;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
-
-    // GPU upscaler with array of threads and array of blocks using UpscaleFromOrginalImage kernel
-    settings.threadsPerBlockX = 32;
+    settings.threadsPerBlockX = 128;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = 1;
     settings.blocksPerGridX = ((width * height) + settings.threadsPerBlockX - 1) / settings.threadsPerBlockX;
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromOriginalImage;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU1.png");
     
     // GPU upscaler in which a threads manages a pixel channes and using UpscaleFromOrginalImage kernel
-    settings.threadsPerBlockX = 32;
+    settings.threadsPerBlockX = 128;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = bytePerPixel;
     settings.blocksPerGridX = ((width * height) + settings.threadsPerBlockX - 1) / settings.threadsPerBlockX;
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromOriginalImage;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
-
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU2.png");
+    
     // GPU upscaler with array of threads and array of blocks using UpscaleFromUpscaledImage kernel
-    // settings.blocksPerGridX = width * height / (settings.threadsPerBlockX * settings.threadsPerBlockY);
-    settings.threadsPerBlockX = 32;
+    settings.threadsPerBlockX = 128;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = 1;
     settings.blocksPerGridX = ((width * height * settings.threadsPerBlockZ * upscaleFactor * upscaleFactor) + (settings.threadsPerBlockX * settings.threadsPerBlockZ) - 1) / (settings.threadsPerBlockX * settings.threadsPerBlockZ);
-    settings.blocksPerGridY =  1;
+    settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromUpscaledImage;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU3.png");
 
     // GPU upscaler in which a threads manages a pixel channes and using UpscaleFromUpscaledImage kernel
-    // settings.blocksPerGridX = (width * upscaleFactor) / (settings.threadsPerBlockX * settings.threadsPerBlockY);
-    // settings.blocksPerGridY = height * upscaleFactor;
-    settings.threadsPerBlockX = 32;
+    settings.threadsPerBlockX = 128;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = bytePerPixel;
     settings.blocksPerGridX = ((width * height * settings.threadsPerBlockZ * upscaleFactor * upscaleFactor) + (settings.threadsPerBlockX * settings.threadsPerBlockZ) - 1) / (settings.threadsPerBlockX * settings.threadsPerBlockZ);
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleFromUpscaledImage;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU4.png");
 
     // GPU upscaler with a single thread
     settings.threadsPerBlockX = 1;
@@ -119,8 +106,20 @@ int main(int argc, char* argv[])
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleWithSingleThread;
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
-*/
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU5.png");
+    */
+
+    // GPU upscaler with Texture Object
+    settings.threadsPerBlockX = 128;
+    settings.threadsPerBlockY = 1;
+    settings.threadsPerBlockZ = 1;
+    settings.pixelsHandledByThread = 1;
+    settings.pixelsHandledByBlock = settings.pixelsHandledByThread * settings.threadsPerBlockX;
+    settings.blocksPerGridX = ((width * height * upscaleFactor * upscaleFactor) + settings.threadsPerBlockX - 1) / settings.threadsPerBlockX;;
+    settings.blocksPerGridY = 1;
+    settings.blocksPerGridZ = 1;
+    settings.upscalerType = UpscalerType::UpscaleWithTextureObject;
+    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel, "img/GPU6.png");
 
     // free image
     stbi_image_free(data);

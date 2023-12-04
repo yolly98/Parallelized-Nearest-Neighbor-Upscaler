@@ -57,7 +57,12 @@ int main(int argc, char* argv[])
             size_t upscaledSize = height * upscaleFactor * width * upscaleFactor * bytePerPixel * sizeof(uint8_t);
 
             // get upscale settings from parameters
-            Settings settings(atoi(argv[5]), atoi(argv[6]), static_cast<UpscalerType>(atoi(argv[7])), width, height, upscaleFactor);
+            Settings settings; 
+            UpscalerType upscalerType = static_cast<UpscalerType>(atoi(argv[5]));
+            if (upscalerType == UpscalerType::UpscaleWithTextureObject)
+                settings = Settings(atoi(argv[6]), upscalerType, width, height, upscaleFactor, atoi(argv[7]));
+            else
+                settings = Settings(atoi(argv[6]), atoi(argv[7]), upscalerType, width, height, upscaleFactor);
             string result = to_string(upscaleFactor) + ";" + settings.toString();
 
             // repeate the tests

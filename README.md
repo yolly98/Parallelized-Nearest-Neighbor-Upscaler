@@ -11,7 +11,12 @@ To test the `cpu upscaler`:
 
 To test the `gpu upscaler`:
 ```[bash]
-.\x64\Release\Parallelized-Nearest-Neighbor-Upscaler.exe IMAGE_NAME UPSCALE_FACTOR RESULTS_FILE "gpu" THREADS_PER_BLOCK_X THREADS_PER_BLOCK_Z UPSCALER_TYPE REPETITIONS
+.\x64\Release\Parallelized-Nearest-Neighbor-Upscaler.exe IMAGE_NAME UPSCALE_FACTOR RESULTS_FILE "gpu" UPSCALER_TYPE THREADS_PER_BLOCK_X THREADS_PER_BLOCK_Z REPETITIONS
+```
+
+If the gpu uupscaler is `UpscaleWithTextureObject`:
+```[bash]
+.\x64\Release\Parallelized-Nearest-Neighbor-Upscaler.exe IMAGE_NAME UPSCALE_FACTOR RESULTS_FILE "gpu" UPSCALER_TYPE THREADS_PER_BLOCK_X PIXELS_HANDLED_BY_THREAD REPETITIONS
 ```
 
 The upscaler type can be:

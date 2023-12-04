@@ -104,6 +104,32 @@ __global__ void upscaleWithSingleThread(uint8_t* imageToUpscale, uint8_t* upscal
     }
 }
 
+__global__ void upscaleWithTextureObject(cudaTextureObject_t texObj, uint8_t* __restrict__ upscaledImage, uint32_t pixelsHandledByBlock, uint32_t pixelsHandledByThread, uint32_t width, uint32_t height, uint8_t bytePerPixel, uint32_t upscaleFactor)
+{
+    uint32_t startNewIndex = blockIdx.x * pixelsHandledByBlock + threadIdx.x * pixelsHandledByThread;
+    uint32_t upscaledWidth = width * upscaleFactor;
+    uint32_t upscaledSize = width * height * upscaleFactor * upscaleFactor;
+
+    // iterate all pixels handled by this thread
+    for (uint32_t i = 0; i < pixelsHandledByThread; i++) {
+        // compute the coordinates of the pixel
+        uint32_t newIndex = startNewIndex + i;
+
+        if (newIndex < upscaledSize) {
+            uint32_t x = newIndex / upscaledWidth;
+            uint32_t y = newIndex - (x * upscaledWidth);
+
+            // compute the coordinates of the pixel of the original image
+            uint32_t oldX = x / upscaleFactor;
+            uint32_t oldY = y / upscaleFactor;
+
+            // copy the pixel
+            uchar4  pixelToCopy = tex2D<uchar4>(texObj, oldY, oldX);
+            memcpy(&upscaledImage[newIndex * bytePerPixel], &pixelToCopy, sizeof(uchar4));
+        }
+    }
+}
+
 float gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFactor, Settings settings, uint8_t* data, uint32_t width, uint32_t height, uint32_t bytePerPixel, string imageName)
 {
     uint8_t* upscaledImage = new uint8_t[upscaledSize];
@@ -122,20 +148,30 @@ float gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFacto
     dim3 block(settings.threadsPerBlockX, settings.threadsPerBlockY, settings.threadsPerBlockZ);        // threads per block
 
     // start kernel execution
-    timer.start();
     switch (settings.upscalerType)
     {
         case UpscalerType::UpscaleFromOriginalImage:
-            upscaleFromOriginalImage << <grid, block >> > (d_data, d_out, width, upscaleFactor, bytePerPixel, originalSize);
+            timer.start();
+            upscaleFromOriginalImage << <grid, block >> > (d_data, d_out, width, upscaleFactor, bytePerPixel, originalSize); 
+            timer.stop();
             break;
         case UpscalerType::UpscaleFromUpscaledImage:
+            timer.start();
             upscaleFromUpscaledImage << <grid, block >> > (d_data, d_out, width, upscaleFactor, bytePerPixel, upscaledSize);
+            timer.stop();
             break;
         case UpscalerType::UpscaleWithSingleThread:
+            timer.start();
             upscaleWithSingleThread << <grid, block >> > (d_data, d_out, width, height, upscaleFactor, bytePerPixel);
+            timer.stop();
+            break;
+        case UpscalerType::UpscaleWithTextureObject:
+            cudaTextureObject_t texObj = createTextureObject(width, height, bytePerPixel, data);
+            timer.start();
+            upscaleWithTextureObject << <grid, block >> > (texObj, d_out, settings.pixelsHandledByBlock, settings.pixelsHandledByThread, width, height, bytePerPixel, upscaleFactor);
+            timer.stop();
             break;
     }
-    timer.stop();
 
     // wait for the end of the execution and retrieve results from GPU memory
     cudaDeviceSynchronize();
@@ -162,4 +198,37 @@ float gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFacto
     cudaFree(d_out);
 
     return time;
+}
+
+cudaTextureObject_t createTextureObject(uint32_t width, uint32_t height, uint32_t bytePerPixel, uint8_t* data)
+{
+    // allocate CUDA array in device memory
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(8, 8, 8, 8, cudaChannelFormatKindUnsigned);
+    cudaArray_t cuArray;
+    cudaMallocArray(&cuArray, &channelDesc, width, height);
+
+    // copy data located at address data in host memory to device memory
+    const size_t spitch = width * bytePerPixel * sizeof(uint8_t);
+    cudaMemcpy2DToArray(cuArray, 0, 0, data, spitch, width * bytePerPixel * sizeof(uint8_t), height, cudaMemcpyHostToDevice);
+
+    // specify texture
+    struct cudaResourceDesc resDesc;
+    memset(&resDesc, 0, sizeof(resDesc));
+    resDesc.resType = cudaResourceTypeArray;
+    resDesc.res.array.array = cuArray;
+
+    // specify texture object parameters
+    struct cudaTextureDesc texDesc;
+    memset(&texDesc, 0, sizeof(texDesc));
+    texDesc.addressMode[0] = cudaAddressModeWrap;
+    texDesc.addressMode[1] = cudaAddressModeWrap;
+    texDesc.filterMode = cudaFilterModePoint;
+    texDesc.readMode = cudaReadModeElementType;
+    texDesc.normalizedCoords = 0;
+
+    // create texture object
+    cudaTextureObject_t texObj = 0;
+    cudaCreateTextureObject(&texObj, &resDesc, &texDesc, NULL);
+
+    return texObj;
 }
