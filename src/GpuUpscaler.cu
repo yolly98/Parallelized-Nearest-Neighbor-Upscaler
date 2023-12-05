@@ -17,7 +17,6 @@ using namespace std;
 __global__ void upscaleFromOriginalImage(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel, size_t originalSize)
 {
     // get the pixel position in the original image vector
-    // uint32_t oldIndex = ((((blockIdx.y * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y) * blockDim.x) + threadIdx.x) * bytePerPixel;
     uint32_t oldIndex = ((blockIdx.x * blockDim.x) + threadIdx.x) * bytePerPixel;
 
     if (oldIndex < originalSize) {
@@ -54,7 +53,6 @@ __global__ void upscaleFromOriginalImage(uint8_t* imageToUpscale, uint8_t* upsca
 __global__ void upscaleFromUpscaledImage(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel, size_t upscaledSize)
 {
     // get the pixel position in the upscaled image vector
-    // uint32_t newIndex = ((((blockIdx.y * gridDim.x + blockIdx.x) * blockDim.y + threadIdx.y) * blockDim.x) + threadIdx.x) * bytePerPixel;
     uint32_t newIndex = ((blockIdx.x * blockDim.x) + threadIdx.x) * bytePerPixel;
 
     if (newIndex < upscaledSize) {
@@ -198,37 +196,4 @@ float gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFacto
     cudaFree(d_out);
 
     return time;
-}
-
-cudaTextureObject_t createTextureObject(uint32_t width, uint32_t height, uint32_t bytePerPixel, uint8_t* data)
-{
-    // allocate CUDA array in device memory
-    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(8, 8, 8, 8, cudaChannelFormatKindUnsigned);
-    cudaArray_t cuArray;
-    cudaMallocArray(&cuArray, &channelDesc, width, height);
-
-    // copy data located at address data in host memory to device memory
-    const size_t spitch = width * bytePerPixel * sizeof(uint8_t);
-    cudaMemcpy2DToArray(cuArray, 0, 0, data, spitch, width * bytePerPixel * sizeof(uint8_t), height, cudaMemcpyHostToDevice);
-
-    // specify texture
-    struct cudaResourceDesc resDesc;
-    memset(&resDesc, 0, sizeof(resDesc));
-    resDesc.resType = cudaResourceTypeArray;
-    resDesc.res.array.array = cuArray;
-
-    // specify texture object parameters
-    struct cudaTextureDesc texDesc;
-    memset(&texDesc, 0, sizeof(texDesc));
-    texDesc.addressMode[0] = cudaAddressModeWrap;
-    texDesc.addressMode[1] = cudaAddressModeWrap;
-    texDesc.filterMode = cudaFilterModePoint;
-    texDesc.readMode = cudaReadModeElementType;
-    texDesc.normalizedCoords = 0;
-
-    // create texture object
-    cudaTextureObject_t texObj = 0;
-    cudaCreateTextureObject(&texObj, &resDesc, &texDesc, NULL);
-
-    return texObj;
 }
