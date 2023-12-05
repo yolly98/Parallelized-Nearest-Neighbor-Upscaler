@@ -14,6 +14,7 @@
     <ClCompile Include="src\ComputeCI.cpp" />
     <ClCompile Include="src\CpuMultithreadUpscaler.cpp" />
     <ClCompile Include="src\CpuUpscaler.cpp" />
+    <ClCompile Include="src\Test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\GpuTimer.cuh" />
@@ -22,7 +23,6 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\GpuUpscaler.cu" />
-    <CudaCompile Include="src\ProfileMain.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{79094AC4-38F4-4EBF-99E3-8F6666DE825C}</ProjectGuid>

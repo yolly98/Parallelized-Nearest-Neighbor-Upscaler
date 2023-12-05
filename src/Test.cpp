@@ -28,26 +28,25 @@ int main(int argc, char* argv[])
         uint32_t width, height, bytePerPixel;
         uint8_t* data = stbi_load(inputImageName.c_str(), (int*)&width, (int*)&height, (int*)&bytePerPixel, channel);
         
+        vector<float> elapsedTimes;
+        string result;
+
         // iterate the required upscaler
         if (!strcmp(argv[4], "cpu")) {
 
             uint32_t numThreads = atoi(argv[5]);
             uint32_t numRepetitions = atoi(argv[6]);
-            string result = to_string(upscaleFactor) + ";" + to_string(numThreads);
+            result = to_string(upscaleFactor) + ";" + to_string(numThreads);
 
             for (uint32_t i = 0; i < numRepetitions; i++) {
                 if (numThreads == 1) {
                     float elapsedTime = cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel);
-                    result = result + ";" + to_string(elapsedTime);
+                    elapsedTimes.push_back(elapsedTime);
                 } else {
                     float elapsedTime = cpuMultithreadUpscaler(numThreads, upscaleFactor, data, width, height, bytePerPixel);
-                    result = result + ";" + to_string(elapsedTime);
+                    elapsedTimes.push_back(elapsedTime);
                 }
             }
-
-            result += "\n";
-            std::replace(result.begin(), result.end(), '.', ',');
-            file.write(result.c_str(), result.size());
         } else if (!strcmp(argv[4], "gpu")) {
 
             uint32_t numRepetitions = atoi(argv[8]);
@@ -63,30 +62,28 @@ int main(int argc, char* argv[])
                 settings = Settings(atoi(argv[6]), upscalerType, width, height, upscaleFactor, atoi(argv[7]));
             else
                 settings = Settings(atoi(argv[6]), atoi(argv[7]), upscalerType, width, height, upscaleFactor);
-            string result = to_string(upscaleFactor) + ";" + settings.toString();
+            result = to_string(upscaleFactor) + ";" + settings.toString();
 
             // repeate the tests
-            vector<float> elapsedTimes;
             for (uint32_t i = 0; i < numRepetitions; i++) {
                 float elapsedTime = gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
                 elapsedTimes.push_back(elapsedTime);
             }
-
-            // compute the arithmetic mean of the elapsed times, the 95% confidence interval and the worst time
-            float meanElapsedTime = std::accumulate(elapsedTimes.begin(), elapsedTimes.end(), 0.0) / elapsedTimes.size();
-            std::pair<float, float> confidenceInterval = computeCI(elapsedTimes);
-            auto it = std::max_element(elapsedTimes.begin(), elapsedTimes.end());
-            float worstElapsedTime = *it;
-
-            // convert and save the values in the CSV
-            result = result + ";" + to_string(meanElapsedTime) + ";" + to_string(confidenceInterval.first) + ";" + to_string(confidenceInterval.second) + ";" + to_string(worstElapsedTime) + "\n";
-            std::replace(result.begin(), result.end(), '.', ',');
-            file.write(result.c_str(), result.size());
         } else {
             cerr << "[-] Wrong parameters" << endl;
             exit(-1);
         }
 
+        // compute the arithmetic mean of the elapsed times, the 95% confidence interval and the worst time
+        float meanElapsedTime = std::accumulate(elapsedTimes.begin(), elapsedTimes.end(), 0.0) / elapsedTimes.size();
+        std::pair<float, float> confidenceInterval = computeCI(elapsedTimes);
+        auto it = std::max_element(elapsedTimes.begin(), elapsedTimes.end());
+        float worstElapsedTime = *it;
+
+        // convert and save the values in the CSV
+        result = result + ";" + to_string(meanElapsedTime) + ";" + to_string(confidenceInterval.first) + ";" + to_string(confidenceInterval.second) + ";" + to_string(worstElapsedTime) + "\n";
+        std::replace(result.begin(), result.end(), '.', ',');
+        file.write(result.c_str(), result.size());
     } else {
         cerr << "[-] Not enough parameters" << endl;
         exit(-1);
