@@ -48,9 +48,6 @@ int main(int argc, char* argv[])
                 }
             }
         } else if (!strcmp(argv[4], "gpu")) {
-
-            uint32_t numRepetitions = atoi(argv[8]);
-
             // compute the new upscaled image size
             size_t originalSize = height * width * bytePerPixel * sizeof(uint8_t);
             size_t upscaledSize = height * upscaleFactor * width * upscaleFactor * bytePerPixel * sizeof(uint8_t);
@@ -58,13 +55,18 @@ int main(int argc, char* argv[])
             // get upscale settings from parameters
             Settings settings; 
             UpscalerType upscalerType = static_cast<UpscalerType>(atoi(argv[5]));
-            if (upscalerType == UpscalerType::UpscaleWithTextureObject)
+            uint32_t numRepetitions;
+            if (upscalerType == UpscalerType::UpscaleWithTextureObject) {
                 settings = Settings(atoi(argv[6]), upscalerType, width, height, upscaleFactor, atoi(argv[7]));
-            else
-                settings = Settings(atoi(argv[6]), atoi(argv[7]), upscalerType, width, height, upscaleFactor);
+                numRepetitions = atoi(argv[8]);
+            }
+            else {
+                settings = Settings(atoi(argv[6]), atoi(argv[7]), upscalerType, width, height, upscaleFactor, atoi(argv[8]));
+                numRepetitions = atoi(argv[9]);
+            }
             result = to_string(upscaleFactor) + ";" + settings.toString();
 
-            // repeate the tests
+            // repeat the tests
             for (uint32_t i = 0; i < numRepetitions; i++) {
                 float elapsedTime = gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
                 elapsedTimes.push_back(elapsedTime);

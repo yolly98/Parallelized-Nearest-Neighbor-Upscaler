@@ -14,63 +14,78 @@
 
 using namespace std;
 
-__global__ void upscaleFromOriginalImage(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel, size_t originalSize)
+__global__ void upscaleFromOriginalImage(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t pixelsHandledByThread, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel, size_t originalSize)
 {
     // get the pixel position in the original image vector
-    uint32_t oldIndex = ((blockIdx.x * blockDim.x) + threadIdx.x) * bytePerPixel;
+    uint32_t oldIndex = ((blockIdx.x * blockDim.x) + threadIdx.x) * pixelsHandledByThread * bytePerPixel;
 
-    if (oldIndex < originalSize) {
-        // convert the position in a matrix notation
-        uint32_t i = oldIndex / (width * bytePerPixel);
-        uint32_t j = oldIndex - (i * width * bytePerPixel);
+    // iterate pixels handled by the thread
+    for (int i = 0; i < pixelsHandledByThread; i++) {
+        // check if oldIndex exceeds the original image size 
+        if (oldIndex < originalSize) {
+            // convert the position in a matrix notation
+            uint32_t i = oldIndex / (width * bytePerPixel);
+            uint32_t j = oldIndex - (i * width * bytePerPixel);
 
-        // compute the position of the first pixel to duplicate in upscaled image
-        uint32_t newi = i * upscaleFactor;
-        uint32_t newj = j * upscaleFactor;
-        uint32_t upscaledWidth = width * upscaleFactor;
+            // compute the position of the first pixel to duplicate in upscaled image
+            uint32_t newi = i * upscaleFactor;
+            uint32_t newj = j * upscaleFactor;
+            uint32_t upscaledWidth = width * upscaleFactor;
 
-        // read the pixel to copy
-        uchar4 pixelToCopy;
-        memcpy(&pixelToCopy, &imageToUpscale[oldIndex], 4 * sizeof(uint8_t));
+            // read the pixel to copy
+            uchar4 pixelToCopy;
+            memcpy(&pixelToCopy, &imageToUpscale[oldIndex], 4 * sizeof(uint8_t));
 
-        // iterate the pixel to duplicate in upscaled image
-        for (int m = newi; m < newi + upscaleFactor; m++) {
-            for (int n = newj; n < newj + upscaleFactor * bytePerPixel; n += bytePerPixel) {
-                // compute the pixel position in the upscaled image vector
-                uint32_t newIndex = m * upscaledWidth * bytePerPixel + n;
+            // iterate the pixel to duplicate in upscaled image
+            for (int m = newi; m < newi + upscaleFactor; m++) {
+                for (int n = newj; n < newj + upscaleFactor * bytePerPixel; n += bytePerPixel) {
+                    // compute the pixel position in the upscaled image vector
+                    uint32_t newIndex = m * upscaledWidth * bytePerPixel + n;
             
-                // manage single channel if tridimensional version, else manage all the others
-                if (blockDim.z == 1) {
-                    memcpy(&upscaledImage[newIndex], &pixelToCopy, 4 * sizeof(uint8_t));
-                } else {
-                    upscaledImage[newIndex + threadIdx.z] = imageToUpscale[oldIndex + threadIdx.z];
+                    // manage single channel if tridimensional version, else manage all the others
+                    if (blockDim.z == 1) {
+                        memcpy(&upscaledImage[newIndex], &pixelToCopy, 4 * sizeof(uint8_t));
+                    } else {
+                        upscaledImage[newIndex + threadIdx.z] = imageToUpscale[oldIndex + threadIdx.z];
+                    }
                 }
             }
         }
+
+        // go to the next pixel
+        oldIndex += bytePerPixel;
     }
 }
 
-__global__ void upscaleFromUpscaledImage(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel, size_t upscaledSize)
+__global__ void upscaleFromUpscaledImage(uint8_t* imageToUpscale, uint8_t* upscaledImage, uint32_t pixelsHandledByThread, uint32_t width, uint8_t upscaleFactor, uint8_t bytePerPixel, size_t upscaledSize)
 {
     // get the pixel position in the upscaled image vector
-    uint32_t newIndex = ((blockIdx.x * blockDim.x) + threadIdx.x) * bytePerPixel;
+    uint32_t newIndex = ((blockIdx.x * blockDim.x) + threadIdx.x) * pixelsHandledByThread * bytePerPixel;
 
-    if (newIndex < upscaledSize) {
-        // convert the position in a matrix notation
-        uint32_t newi = newIndex / (width * upscaleFactor * bytePerPixel);
-        uint32_t newj = (newIndex - (newi * width * upscaleFactor * bytePerPixel)) / bytePerPixel;
+    // iterate pixels handled by the thread
+    for (int i = 0; i < pixelsHandledByThread; i++) {
+        // check if newIndex exceeds the upscaled image size 
+        if (newIndex < upscaledSize) {
+            // convert the position in a matrix notation
+            uint32_t newi = newIndex / (width * upscaleFactor * bytePerPixel);
+            uint32_t newj = (newIndex - (newi * width * upscaleFactor * bytePerPixel)) / bytePerPixel;
 
-        // compute the position of the pixel to copy from the original image
-        uint32_t i = newi / upscaleFactor;
-        uint32_t j = newj / upscaleFactor;
-        uint32_t oldIndex = (i * width + j) * bytePerPixel;
+            // compute the position of the pixel to copy from the original image
+            uint32_t i = newi / upscaleFactor;
+            uint32_t j = newj / upscaleFactor;
+            uint32_t oldIndex = (i * width + j) * bytePerPixel;
 
-        // manage single channel if tridimensional version, else manage all the others
-        if (blockDim.z == 1) {
-            memcpy(&upscaledImage[newIndex], &imageToUpscale[oldIndex], 4 * sizeof(uint8_t));
-        } else {
-            upscaledImage[newIndex + threadIdx.z] = imageToUpscale[oldIndex + threadIdx.z];
-        }      
+            // manage single channel if tridimensional version, else manage all the others
+            if (blockDim.z == 1) {
+                memcpy(&upscaledImage[newIndex], &imageToUpscale[oldIndex], 4 * sizeof(uint8_t));
+            }
+            else {
+                upscaledImage[newIndex + threadIdx.z] = imageToUpscale[oldIndex + threadIdx.z];
+            }
+        }
+
+        // go to the next pixel
+        newIndex += bytePerPixel;
     }
 }
 
@@ -150,12 +165,12 @@ float gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFacto
     {
         case UpscalerType::UpscaleFromOriginalImage:
             timer.start();
-            upscaleFromOriginalImage << <grid, block >> > (d_data, d_out, width, upscaleFactor, bytePerPixel, originalSize); 
+            upscaleFromOriginalImage << <grid, block >> > (d_data, d_out, settings.pixelsHandledByThread, width, upscaleFactor, bytePerPixel, originalSize);
             timer.stop();
             break;
         case UpscalerType::UpscaleFromUpscaledImage:
             timer.start();
-            upscaleFromUpscaledImage << <grid, block >> > (d_data, d_out, width, upscaleFactor, bytePerPixel, upscaledSize);
+            upscaleFromUpscaledImage << <grid, block >> > (d_data, d_out, settings.pixelsHandledByThread, width, upscaleFactor, bytePerPixel, upscaledSize);
             timer.stop();
             break;
         case UpscalerType::UpscaleWithSingleThread:
