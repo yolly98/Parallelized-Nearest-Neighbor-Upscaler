@@ -41,7 +41,7 @@ struct Settings {
                 blocksPerGridX = ((width * height) + threadsPerBlockX - 1) / threadsPerBlockX;
                 break;
             case UpscalerType::UpscaleFromUpscaledImage:
-                blocksPerGridX = ((width * height * threadsPerBlockZ * upscaleFactor * upscaleFactor) + (threadsPerBlockX * threadsPerBlockZ) - 1) / (threadsPerBlockX * threadsPerBlockZ);
+                blocksPerGridX = ((width * height * upscaleFactor * upscaleFactor) + threadsPerBlockX - 1) / threadsPerBlockX;
                 break;
             case UpscalerType::UpscaleWithSingleThread:
                 blocksPerGridX = 1;
