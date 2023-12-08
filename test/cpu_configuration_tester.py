@@ -2,7 +2,7 @@ import subprocess
 
 REPETITIONS = 30
 UPSCALE_RANGE = [ 2, 4, 6 ]
-CPU_THREAD_RANGE = [ 2, 4, 6, 8, 16 ]
+CPU_THREAD_RANGE = [ 2, 4, 6, 8, 16, 32, 64, 128, 256, 512, 1024 ]
 SMALL_IMAGE = { 'name': '"../img/in-small.png"', 'width': 640, 'height': 479, 'byte_per_pixel': 4 }
 LARGE_IMAGE = { 'name': '"../img/in-large.png"', 'width': 5472, 'height': 3648, 'byte_per_pixel': 4 }
 EXECUTABLE = '..\\x64\Release\Parallelized-Nearest-Neighbor-Upscaler.exe'
