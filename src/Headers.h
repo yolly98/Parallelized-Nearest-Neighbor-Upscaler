@@ -39,19 +39,22 @@ struct Settings {
         {
             case UpscalerType::UpscaleFromOriginalImage:
                 blocksPerGridX = (((width * height) / pixelsHandledByThread) + threadsPerBlockX - 1) / threadsPerBlockX;
+                pixelsHandledByBlock = threadsPerBlockX * pixelsHandledByThread;
                 break;
             case UpscalerType::UpscaleFromUpscaledImage:
                 blocksPerGridX = (((width * height * upscaleFactor * upscaleFactor) / pixelsHandledByThread) + threadsPerBlockX - 1) / threadsPerBlockX;
+                pixelsHandledByBlock = threadsPerBlockX * pixelsHandledByThread;
                 break;
             case UpscalerType::UpscaleWithSingleThread:
                 blocksPerGridX = 1;
+                pixelsHandledByBlock = 1;
                 break;
         }
     }
     Settings(uint32_t tpbX, UpscalerType ut, uint32_t width, uint32_t height, uint8_t upscaleFactor, uint32_t phbt)
         : threadsPerBlockX(tpbX), threadsPerBlockY(1), threadsPerBlockZ(1), blocksPerGridY(1), blocksPerGridZ(1), pixelsHandledByThread(phbt), upscalerType(ut) {
         // compute the number of blocks per grid on x-axis
-        blocksPerGridX = ((width * height * upscaleFactor * upscaleFactor) + threadsPerBlockX - 1) / threadsPerBlockX;
+        blocksPerGridX = (((width * height * upscaleFactor * upscaleFactor) / pixelsHandledByThread) + threadsPerBlockX - 1) / threadsPerBlockX;
         pixelsHandledByBlock = threadsPerBlockX * pixelsHandledByThread;
     }
 
@@ -77,11 +80,8 @@ struct Settings {
 
         printf("--> Threads per Block: (%d, %d, %d)\n", threadsPerBlockX, threadsPerBlockY, threadsPerBlockZ);
         printf("--> Blocks per Grid: (%d, %d, %d)\n", blocksPerGridX, blocksPerGridY, blocksPerGridZ);
-
-        if (upscalerType == UpscalerType::UpscaleWithTextureObject) {
-            printf("--> Pixels Handled by Thread: %d\n", pixelsHandledByThread);
-            printf("--> Pixels Handled by Block: %d\n", pixelsHandledByBlock);
-        }
+        printf("--> Pixels Handled by Thread: %d\n", pixelsHandledByThread);
+        printf("--> Pixels Handled by Block: %d\n", pixelsHandledByBlock);
     }
 
     std::string toString() {
@@ -89,6 +89,7 @@ struct Settings {
 
         str = str + std::to_string(threadsPerBlockX) + ";" + std::to_string(threadsPerBlockY) + ";" + std::to_string(threadsPerBlockZ);
         str = str + ";" + std::to_string(blocksPerGridX) + ";" + std::to_string(blocksPerGridY) + ";" + std::to_string(blocksPerGridZ);
+        str = str + ";" + std::to_string(pixelsHandledByThread) + ";" + std::to_string(pixelsHandledByBlock);
 
         switch (upscalerType)
         {
@@ -102,7 +103,7 @@ struct Settings {
             str = str + ";" + "\"UpscaleWithSingleThread\"";
             break;
         case UpscalerType::UpscaleWithTextureObject:
-            str = str + ";" + std::to_string(pixelsHandledByThread) + ";" + std::to_string(pixelsHandledByBlock) + ";" + "\"UpscaleWithTextureObject\"";
+            str = str + ";" + "\"UpscaleWithTextureObject\"";
             break;
         }
 

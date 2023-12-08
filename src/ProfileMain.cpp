@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
     settings.threadsPerBlockZ = 1;
     settings.pixelsHandledByThread = 1;
     settings.pixelsHandledByBlock = settings.pixelsHandledByThread * settings.threadsPerBlockX;
-    settings.blocksPerGridX = ((width * height * upscaleFactor * upscaleFactor) + settings.threadsPerBlockX - 1) / settings.threadsPerBlockX;;
+    settings.blocksPerGridX = ((width * height * upscaleFactor * upscaleFactor) / settings.pixelsHandledByThread + settings.threadsPerBlockX - 1) / settings.threadsPerBlockX;
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleWithTextureObject;
