@@ -57,6 +57,7 @@ float cpuMultithreadUpscaler(uint32_t numThread, uint8_t upscaleFactor, uint8_t*
     for (int i = 0; i < numThread; ++i) {
         uint32_t start = i * pixelToManage * bytePerPixel;
         uint32_t stop = (start + pixelToManage * bytePerPixel) <= sizeOriginalImage ? (start + pixelToManage * bytePerPixel) : sizeOriginalImage;
+        cout << start << ":" << stop << endl;
         threads.emplace_back(worker, originalImage, upscaledImage, start, stop, upscaleFactor, width, height, bytePerPixel);
     }
 

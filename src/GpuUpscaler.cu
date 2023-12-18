@@ -152,9 +152,11 @@ float gpuUpscaler(size_t originalSize, size_t upscaledSize, uint8_t upscaleFacto
 
     // allocate GPU memory for input and output array 
     uint8_t* d_data, * d_out;
-    cudaMalloc((void**)&d_data, originalSize);
+    if (settings.upscalerType != UpscalerType::UpscaleWithTextureObject) {
+        cudaMalloc((void**)&d_data, originalSize);
+        cudaMemcpy(d_data, data, originalSize, cudaMemcpyHostToDevice);
+    }
     cudaMalloc((void**)&d_out, upscaledSize);
-    cudaMemcpy(d_data, data, originalSize, cudaMemcpyHostToDevice);
 
     // define resources for the execution
     dim3 grid(settings.blocksPerGridX, settings.blocksPerGridY, settings.blocksPerGridZ);               // blocks per grid

@@ -23,13 +23,16 @@ int main(int argc, char* argv[])
         upscaleFactor = atoi(argv[2]);
     }
     else {
-        inputImageName = "img/in-small.png";
+        inputImageName = "img/in-large.png";
         upscaleFactor = 2;
     }
 
     // open the image
     uint32_t width, height, bytePerPixel;
     uint8_t* data = stbi_load(inputImageName.c_str(), (int*)&width, (int*)&height, (int*)&bytePerPixel, channel);
+
+    // width = 1280; 
+    // height = 720;
 
     if (!data) {
         cout << "[-] Image not found" << endl;
@@ -53,11 +56,11 @@ int main(int argc, char* argv[])
     /*
     // single core CPU upscaler
     cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel);
-
+    */
     // multi core CPU upscaler
     cout << "\n---------------------------------------------------------------" << endl << endl;
     cpuMultithreadUpscaler(16, upscaleFactor, data, width, height, bytePerPixel);
-    
+    /*
     // GPU upscaler with one thread per block using UpscaleFromOrginalImage kernel
     settings.threadsPerBlockX = 128;
     settings.threadsPerBlockY = 1;
@@ -111,19 +114,19 @@ int main(int argc, char* argv[])
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleWithSingleThread;
     gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
-    */
 
     // GPU upscaler with Texture Object
     settings.threadsPerBlockX = 128;
     settings.threadsPerBlockY = 1;
     settings.threadsPerBlockZ = 1;
-    settings.pixelsHandledByThread = 1;
+    settings.pixelsHandledByThread = 64;
     settings.pixelsHandledByBlock = settings.pixelsHandledByThread * settings.threadsPerBlockX;
     settings.blocksPerGridX = ((width * height * upscaleFactor * upscaleFactor) / settings.pixelsHandledByThread + settings.threadsPerBlockX - 1) / settings.threadsPerBlockX;
     settings.blocksPerGridY = 1;
     settings.blocksPerGridZ = 1;
     settings.upscalerType = UpscalerType::UpscaleWithTextureObject;
     gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+    */
 
     // free image
     stbi_image_free(data);

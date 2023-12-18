@@ -4,7 +4,7 @@
 
 #include "cuda_runtime.h"
 
-std::pair<float, float> computeCI(const std::vector<float>& values) {
+float computeCI(const std::vector<float>& values) {
     // compute mean
     float mean = std::accumulate(values.begin(), values.end(), 0.0) / values.size();
 
@@ -19,7 +19,7 @@ std::pair<float, float> computeCI(const std::vector<float>& values) {
     float standardError = standardDeviation / std::sqrt(static_cast<float>(values.size()));
     float marginOfError = 1.96 * standardError;
 
-    return std::make_pair(mean - marginOfError, mean + marginOfError);
+    return marginOfError;
 }
 
 cudaTextureObject_t createTextureObject(uint32_t width, uint32_t height, uint32_t bytePerPixel, uint8_t* data)
