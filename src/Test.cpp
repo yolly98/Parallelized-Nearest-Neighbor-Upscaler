@@ -24,8 +24,7 @@ int main(int argc, char* argv[])
         file.open(argv[3], std::ios_base::app);
 
         // open the image
-        int channel = Channels::RGB_ALPHA;
-        uint32_t width, height, bytePerPixel;
+        uint32_t width, height, bytePerPixel, channel;
         uint8_t* data = stbi_load(inputImageName.c_str(), (int*)&width, (int*)&height, (int*)&bytePerPixel, channel);
         
         vector<float> elapsedTimes;
@@ -33,47 +32,36 @@ int main(int argc, char* argv[])
 
         // iterate the required upscaler
         if (!strcmp(argv[4], "cpu")) {
+            // check if it has been required a customized image size
+            if (argc == 9) {
+                width = atoi(argv[7]);
+                height = atoi(argv[8]);
+            }
 
+            // get upscale settings from parameters
             uint32_t numThreads = atoi(argv[5]);
             uint32_t numRepetitions = atoi(argv[6]);
             result = to_string(upscaleFactor) + ";" + to_string(width) + ";" + to_string(height) + ";" + to_string(numThreads);
 
+            // repeate the tests
             for (uint32_t i = 0; i < numRepetitions; i++) {
-                if (numThreads == 1) {
-                    float elapsedTime = cpuUpscaler(upscaleFactor, data, width, height, bytePerPixel);
-                    elapsedTimes.push_back(elapsedTime);
-                } else {
-                    float elapsedTime = cpuMultithreadUpscaler(numThreads, upscaleFactor, data, width, height, bytePerPixel);
-                    elapsedTimes.push_back(elapsedTime);
-                }
+                float elapsedTime = cpuUpscaler(numThreads, upscaleFactor, data, width, height, bytePerPixel);
+                elapsedTimes.push_back(elapsedTime);
             }
         } else if (!strcmp(argv[4], "gpu")) {
+            // check if it has been required a customized image size
+            if (argc == 11) {
+                width = atoi(argv[9]);
+                height = atoi(argv[10]);
+            }
+
             // get upscale settings from parameters
             Settings settings; 
             UpscalerType upscalerType = static_cast<UpscalerType>(atoi(argv[5]));
-            uint32_t numRepetitions;
-            if (upscalerType == UpscalerType::UpscaleWithTextureObject) {
-                // check if image size is customized
-                if (argc == 11) {
-                    width = atoi(argv[9]);
-                    height = atoi(argv[10]);
-                }
+            uint32_t numRepetitions = atoi(argv[8]);
 
-                settings = Settings(atoi(argv[6]), upscalerType, width, height, upscaleFactor, atoi(argv[7]));
-                numRepetitions = atoi(argv[8]);
-            }
-            else {
-                // check if image size is customized 
-                if (argc == 12) {
-                    width = atoi(argv[10]);
-                    height = atoi(argv[11]);
-                }
-
-                settings = Settings(atoi(argv[6]), atoi(argv[7]), upscalerType, width, height, upscaleFactor, atoi(argv[8]));
-                numRepetitions = atoi(argv[9]);
-            }
+            settings = Settings(atoi(argv[6]), upscalerType, width, height, upscaleFactor, atoi(argv[7]));
             result = to_string(upscaleFactor) + ";" + to_string(width) + ";" + to_string(height) + ";" + settings.toString();
-
 
             // compute the new upscaled image size
             size_t originalSize = height * width * bytePerPixel * sizeof(uint8_t);

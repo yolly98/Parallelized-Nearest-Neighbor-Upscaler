@@ -4,22 +4,21 @@ Computer Architecture project.
 
 ## Test
 
+To compile the test main:
+```[bash]
+make mode=release main=test
+```
+
 To test the `cpu upscaler`:
 ```[bash]
-.\x64\Release\Parallelized-Nearest-Neighbor-Upscaler.exe IMAGE_NAME UPSCALE_FACTOR RESULTS_FILE "cpu" NUMBER_OF_THREADS REPETITIONS
+bin/upscaler IMAGE_NAME UPSCALE_FACTOR RESULTS_FILE "cpu" NUMBER_OF_THREADS REPETITIONS [WIDTH] [HEIGHT]
 ```
 
 To test the `gpu upscaler`:
 ```[bash]
-.\x64\Release\Parallelized-Nearest-Neighbor-Upscaler.exe IMAGE_NAME UPSCALE_FACTOR RESULTS_FILE "gpu" UPSCALER_TYPE THREADS_PER_BLOCK_X THREADS_PER_BLOCK_Z PIXELS_HANDLED_BY_THREAD REPETITIONS
-```
-
-If the gpu upscaler is `UpscaleWithTextureObject`:
-```[bash]
-.\x64\Release\Parallelized-Nearest-Neighbor-Upscaler.exe IMAGE_NAME UPSCALE_FACTOR RESULTS_FILE "gpu" UPSCALER_TYPE THREADS_PER_BLOCK_X PIXELS_HANDLED_BY_THREAD REPETITIONS
+bin/upscaler IMAGE_NAME UPSCALE_FACTOR RESULTS_FILE "gpu" UPSCALER_TYPE THREADS_PER_BLOCK PIXELS_HANDLED_BY_THREAD REPETITIONS [WIDTH] [HEIGHT]
 ```
 
 The upscaler type can be:
-* *0*: Upscale from Original Image
-* *1*: Upscale from Upscaled Image
-* *2*: Upscale with Single Thread
+* *0*: Upscale with Texture Object
+* *1*: Upscale with Texture Object Optimized
