@@ -21,12 +21,12 @@ struct Settings {
     UpscalerType upscalerType;
 
     Settings()
-        : threadsPerBlock(0), blocksPerGrid(0), upscalerType(UpscalerType::UpscaleWithTextureObjectOptimized) {}
+        : upscalerType(UpscalerType::UpscaleWithTextureObjectOptimized) {}
     Settings(uint32_t tpb, UpscalerType ut, uint32_t width, uint32_t height, uint8_t upscaleFactor, uint32_t phbt)
         : threadsPerBlock(tpb), pixelsHandledByThread(phbt), upscalerType(ut) {
         // compute the number of blocks per grid on x-axis
-        blocksPerGrid = (((width * height * upscaleFactor * upscaleFactor) / pixelsHandledByThread) + threadsPerBlock - 1) / threadsPerBlock;
-        threadsCount = ceil(width * height * upscaleFactor * upscaleFactor / pixelsHandledByThread);
+        blocksPerGrid = (((width * height * upscaleFactor * upscaleFactor) / (float)pixelsHandledByThread) + threadsPerBlock - 1) / (float)threadsPerBlock;
+        threadsCount = ceil(width * height * upscaleFactor * upscaleFactor / (float)pixelsHandledByThread);
     }
 
 
@@ -46,6 +46,7 @@ struct Settings {
         printf("--> Threads per Block: (%d)\n", threadsPerBlock);
         printf("--> Blocks per Grid: (%d)\n", blocksPerGrid);
         printf("--> Pixels Handled by Thread: %d\n", pixelsHandledByThread);
+        printf("--> Threads Count: %d\n", threadsCount);
     }
 
     std::string toString() {
