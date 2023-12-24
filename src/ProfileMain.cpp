@@ -14,20 +14,32 @@ using namespace std;
 int main(int argc, char* argv[])
 {
     string inputImageName;
-    uint8_t upscaleFactor;
+    uint8_t upscaleFactor = 2;
+    UpscalerType upscaler;
+    uint32_t width, height, threadsPerBlock, pixelsHandledByThread;
 
-    // read image name from input parameters
+    // read parameters
     if (argc >= 2) {
-        inputImageName = argv[1];
-        upscaleFactor = atoi(argv[2]);
+        inputImageName = "img/in-large.png";
+        upscaler = static_cast<UpscalerType>(atoi(argv[1]));
+        threadsPerBlock = atoi(argv[2]);
+        pixelsHandledByThread = atoi(argv[3]);
     } else {
         inputImageName = "img/in-small.png";
-        upscaleFactor = 2;
+        upscaler = UpscalerType::UpscaleWithTextureObject;
+        threadsPerBlock = 128;
+        pixelsHandledByThread = 128;
     }
 
     // open the image
-    uint32_t width, height, bytePerPixel, channel;
+    uint32_t bytePerPixel, channel;
     uint8_t* data = stbi_load(inputImageName.c_str(), (int*)&width, (int*)&height, (int*)&bytePerPixel, channel);
+
+    // read the custom size if given
+    if (argc >= 6) {
+        width = atoi(argv[4]);
+        height = atoi(argv[5]);
+    }
 
     // check if the image is loaded
     if (!data) {
@@ -53,23 +65,14 @@ int main(int argc, char* argv[])
     size_t originalSize = height * width * bytePerPixel * sizeof(uint8_t);
     size_t upscaledSize = height * upscaleFactor * width * upscaleFactor * bytePerPixel * sizeof(uint8_t);
 
-    Settings settings;
-
-/*
-    // single core CPU upscaler
-    cpuUpscaler(1, upscaleFactor, data, width, height, bytePerPixel);
-
-    // multi core CPU upscaler
-    cpuUpscaler(16, upscaleFactor, data, width, height, bytePerPixel);
-
-    // GPU Upscaler with Texture Object
-    settings = Settings(128, UpscalerType::UpscaleWithTextureObject, width, height, upscaleFactor, 2);
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
-*/
-
-    // GPU Upscaler with Texture Object Optimized
-    settings = Settings(128, UpscalerType::UpscaleWithTextureObjectOptimized, width, height, upscaleFactor, 128);
-    gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+    // upscale with GPU
+    if (upscaler == UpscalerType::UpscaleWithTextureObject){
+        Settings settings = Settings(threadsPerBlock, UpscalerType::UpscaleWithTextureObject, width, height, upscaleFactor, pixelsHandledByThread);
+        gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+    } else {
+        Settings settings = Settings(threadsPerBlock, UpscalerType::UpscaleWithTextureObjectOptimized, width, height, upscaleFactor, pixelsHandledByThread);
+        gpuUpscaler(originalSize, upscaledSize, upscaleFactor, settings, data, width, height, bytePerPixel);
+    }
 
     // free image
     stbi_image_free(data);
