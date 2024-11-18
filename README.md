@@ -1,4 +1,4 @@
-# Parallelized Nearest Neighbour Upscaler
+# Parallelized Nearest Neighbor Upscaler
 <p align="center">
   <img src="https://cdn-icons-png.flaticon.com/512/882/882731.png" alt="canva-logo" height="64px"/>
 </p>
